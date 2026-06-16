@@ -1,0 +1,8 @@
+on cree fichier de generation dataset puis on genere on stocke dans dossier data puis creation  schema puis fichier etl avec extraction transformation chargement des tables et des insertions dans postgresql 
+Premierement : Installer psycopg2 avec pip install psycopg2-binary
+ensuite : psql -U postgres -c "CREATE DATABASE bi_telecom;"
+dinalement : on lance ETL avec cd "C:\Users\Administrateur\Document\BI Project"
+python etl_pipeline.py db
+l ETL va se connecter  a Postgresql, creer automatquement tous les tables, inserer les lignes et generer rapport : rapport_etl:json
+si ca marche pas on demarre etl_pipeline.py puis on part a db ds postgres clique droite query tool on ouvre fichier du schema on exxecute ensuite fichier inserts on execute
+je demarre fix durees dans postgres pour demarrer les durees corrigés apres insertion
