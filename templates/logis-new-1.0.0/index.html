@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>NetVision — Plateforme de Supervision Réseau</title>
+  <meta name="description" content="Plateforme BI de supervision et de pilotage des infrastructures télécom Huawei">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+
+  <!-- Vendor CSS Files -->
+  <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+  <link href="assets/vendor/aos/aos.css" rel="stylesheet">
+  <link href="assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+  <link href="assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+
+  <!-- Main CSS File -->
+  <link href="assets/css/main.css" rel="stylesheet">
+
+  
+</head>
+
+<body class="index-page">
+
+  <div class="grid-bg"></div>
+
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid container-xl position-relative d-flex align-items-center">
+
+      <a href="index.html" class="logo d-flex align-items-center me-auto">
+        <div class="logo-icon"><i class="bi bi-reception-4"></i></div>
+        <h1 class="sitename" >Net<span style="color: #0096ff;">Vision</span></h1>
+      </a>
+
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="#hero" class="active">Accueil</a></li>
+          <li><a href="#about">Architecture</a></li>
+          <li><a href="#services">Modules</a></li>
+          <li><a href="#features">Rôles</a></li>
+
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ── HERO ─────────────────────────────── -->
+    <section id="hero">
+      <div class="hero-glow"></div>
+      <div class="hero-glow-2"></div>
+
+      <div class="container">
+        <div class="row gy-5 align-items-center">
+
+          <div class="col-lg-6" data-aos="fade-up">
+           
+
+            <h1>
+              Supervision
+              <span class="accent">réseau télécom</span>
+              <span class="accent-2">intelligente</span>
+            </h1>
+
+            <p>Plateforme BI centralisée pour la gestion des incidents, le dispatch des techniciens et le pilotage des infrastructures réseau Huawei au Maroc.</p>
+
+            <div class="hero-btns">
+              <a href="login.html" class="btn-primary-custom" style="color: white;">
+                <i class="bi bi-box-arrow-in-right" style="color: white;"></i>
+                Accéder à la plateforme
+              </a>
+              <a href="#about" class="btn-secondary-custom">
+                <i class="bi bi-play-circle"></i>
+                Découvrir
+              </a>
+            </div>
+
+            <div class="hero-stats">
+              <div class="hero-stat-item">
+                <span class="number">300<span>+</span></span>
+                <span class="label">Incidents générés</span>
+              </div>
+              <div class="hero-stat-item">
+                <span class="number">120</span>
+                <span class="label">Équipements</span>
+              </div>
+              <div class="hero-stat-item">
+                <span class="number">10</span>
+                <span class="label">Secteurs Maroc</span>
+              </div>
+              <div class="hero-stat-item">
+                <span class="number">30</span>
+                <span class="label">Techniciens</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
+            <div class="hero-visual" style="padding: 24px;">
+
+              <div class="floating-badge badge-1">
+                <div class="badge-icon" style="background:rgba(255,60,110,0.15);color:#ff3c6e">
+                  <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:rgba(200,212,232,0.5)">Incident critique</div>
+                  <div style="font-size:13px">INC-0042 — Casablanca</div>
+                </div>
+              </div>
+
+              <div class="dashboard-preview">
+                <div class="dp-header">
+                  <div class="dp-dot" style="background:#ff3c6e"></div>
+                  <div class="dp-dot" style="background:#ffa500"></div>
+                  <div class="dp-dot" style="background:#00c864"></div>
+                  <span style="font-size:11px;color:rgba(200,212,232,0.3);margin-left:8px;font-family:var(--heading-font)">Dashboard NOC — NetVision</span>
+                </div>
+
+                <div class="dp-kpis">
+                  <div class="dp-kpi">
+                    <div class="k-label">Incidents</div>
+                    <div class="k-val red">300</div>
+                  </div>
+                  <div class="dp-kpi">
+                    <div class="k-label">MTTR</div>
+                    <div class="k-val amber">3.2h</div>
+                  </div>
+                  <div class="dp-kpi">
+                    <div class="k-label">Résolution</div>
+                    <div class="k-val cyan">68%</div>
+                  </div>
+                </div>
+
+                <div class="dp-chart">
+                  <div style="font-size:10px;color:rgba(200,212,232,0.35);margin-bottom:8px;font-family:var(--heading-font);text-transform:uppercase;letter-spacing:0.5px">Incidents / heure</div>
+                  <div class="dp-bars">
+                    <div class="dp-bar" style="height:30%"></div>
+                    <div class="dp-bar" style="height:40%"></div>
+                    <div class="dp-bar" style="height:55%"></div>
+                    <div class="dp-bar" style="height:45%"></div>
+                    <div class="dp-bar" style="height:60%"></div>
+                    <div class="dp-bar" style="height:70%"></div>
+                    <div class="dp-bar" style="height:65%"></div>
+                    <div class="dp-bar" style="height:80%"></div>
+                    <div class="dp-bar" style="height:75%"></div>
+                    <div class="dp-bar" style="height:90%"></div>
+                    <div class="dp-bar peak" style="height:100%"></div>
+                    <div class="dp-bar" style="height:80%"></div>
+                    <div class="dp-bar" style="height:65%"></div>
+                    <div class="dp-bar" style="height:50%"></div>
+                    <div class="dp-bar" style="height:35%"></div>
+                    <div class="dp-bar" style="height:25%"></div>
+                  </div>
+                </div>
+
+                <div class="dp-map-preview">
+                  <div class="map-dots">
+                    <div class="map-dot" style="background:#ff3c6e;top:55%;left:28%"></div>
+                    <div class="map-dot" style="background:#ff3c6e;top:15%;left:50%;animation-delay:.5s"></div>
+                    <div class="map-dot" style="background:#ffa500;top:35%;left:55%;animation-delay:1s"></div>
+                    <div class="map-dot" style="background:#00c864;top:60%;left:65%;animation-delay:.3s"></div>
+                    <div class="map-dot" style="background:#00c864;top:30%;left:35%;animation-delay:.8s"></div>
+                    <div class="map-dot" style="background:#ffa500;top:70%;left:42%;animation-delay:1.2s"></div>
+                  </div>
+                  <span class="map-label"><i class="bi bi-map me-1"></i>Carte réseau — Maroc</span>
+                </div>
+              </div>
+
+              <div class="floating-badge badge-2">
+                <div class="badge-icon" style="background:rgba(0,200,100,0.15);color:#00c864">
+                  <i class="bi bi-person-check-fill"></i>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:rgba(200,212,232,0.5)">Technicien assigné</div>
+                  <div style="font-size:13px">MRANI Bilal — Grand Casablanca</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FEATURED SERVICES ─────────────────── -->
+    <section id="featured-services">
+      <div class="container">
+        <div class="row gy-4">
+
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+            <div class="feat-item">
+              <div class="feat-icon cyan"><i class="bi bi-lightning-charge-fill"></i></div>
+              <div>
+                <h4>Supervision en temps réel</h4>
+                <p>Surveillance continue des équipements Huawei — BTS 2G/3G/4G, routeurs, OLT, antennes — avec alertes et KPI mis à jour toutes les 15 secondes.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+            <div class="feat-item">
+              <div class="feat-icon red"><i class="bi bi-geo-alt-fill"></i></div>
+              <div>
+                <h4>Dispatch intelligent</h4>
+                <p>Assignation du technicien par compétence, secteur géographique et note de performance — avec notification popup instantanée côté terrain.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+            <div class="feat-item">
+              <div class="feat-icon green"><i class="bi bi-graph-up-arrow"></i></div>
+              <div>
+                <h4>KPI & Gantt Planning</h4>
+                <p>MTTR, incidents critiques/ouverts, planning journalier Gantt avec historique, export Excel par date.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ABOUT ──────────────────────────────── -->
+    <section id="about">
+      <div class="container">
+        <div class="row gy-5 align-items-center">
+
+          <div class="col-lg-6" data-aos="fade-up">
+            <div class="section-tag">Architecture système</div>
+            <h2>Pipeline ETL →<br>Data Warehouse →<br>Dashboards BI</h2>
+            <p class="lead-text">
+              Une architecture BI complète construite sur PostgreSQL, alimentée par un ETL Python qui transforme les données opérationnelles en indicateurs décisionnels.
+            </p>
+
+            <div class="about-feature">
+              <div class="about-feature-icon"><i class="bi bi-database-fill"></i></div>
+              <div>
+                <h5>Star Schema PostgreSQL</h5>
+                <p>Fact_Incidents, Dim_Equipement, Dim_Technicien, Dim_Secteur, Dim_Temps — 300+ incidents, 120 équipements.</p>
+              </div>
+            </div>
+
+            <div class="about-feature">
+              <div class="about-feature-icon"><i class="bi bi-arrow-repeat"></i></div>
+              <div>
+                <h5>ETL Python automatisé</h5>
+                <p>Extraction, transformation, chargement des données avec calcul automatique des KPI réseau.</p>
+              </div>
+            </div>
+
+            <div class="about-feature">
+              <div class="about-feature-icon"><i class="bi bi-shield-check"></i></div>
+              <div>
+                <h5>Deux interfaces dédiées</h5>
+                <p>Dashboard NOC admin avec carte, Gantt et dispatch — Interface terrain technicien avec tickets, statuts et historique.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
+            <div class="about-visual">
+              <div class="schema-title">Flux de données</div>
+              <div class="schema-flow">
+                <div class="schema-step">
+                  <div class="schema-step-icon s1"><i class="bi bi-hdd-stack"></i></div>
+                  <div>
+                    <div class="schema-step-label">Sources de données</div>
+                    <div class="schema-step-sub">Données simulées : 300 incidents · 120 équipements · 30 techniciens</div>
+                  </div>
+                </div>
+                <div class="schema-arrow"><i class="bi bi-arrow-down"></i></div>
+                <div class="schema-step">
+                  <div class="schema-step-icon s2"><i class="bi bi-gear-wide-connected"></i></div>
+                  <div>
+                    <div class="schema-step-label">ETL Python</div>
+                    <div class="schema-step-sub">Nettoyage · Transformation · Calcul KPI</div>
+                  </div>
+                </div>
+                <div class="schema-arrow"><i class="bi bi-arrow-down"></i></div>
+                <div class="schema-step">
+                  <div class="schema-step-icon s3"><i class="bi bi-database"></i></div>
+                  <div>
+                    <div class="schema-step-label">Data Warehouse PostgreSQL</div>
+                    <div class="schema-step-sub">Star Schema · fact_incidents · fact_tickets · dim_technicien · dim_equipement · dim_secteur</div>
+                  </div>
+                </div>
+                <div class="schema-arrow"><i class="bi bi-arrow-down"></i></div>
+                <div class="schema-step">
+                  <div class="schema-step-icon s4"><i class="bi bi-server"></i></div>
+                  <div>
+                    <div class="schema-step-label">API Flask</div>
+                    <div class="schema-step-sub">25+ endpoints REST · JSON · CORS · Flask</div>
+                  </div>
+                </div>
+                <div class="schema-arrow"><i class="bi bi-arrow-down"></i></div>
+                <div class="schema-step">
+                  <div class="schema-step-icon s5"><i class="bi bi-display"></i></div>
+                  <div>
+                    <div class="schema-step-label">Plateforme Web</div>
+                    <div class="schema-step-sub">Dashboard · Carte Leaflet · Gantt · Tickets · Interface Terrain</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SERVICES / MODULES ─────────────────── -->
+    <section id="services">
+      <div class="container">
+
+        <div class="section-header" data-aos="fade-up">
+          <div class="section-tag">Fonctionnalités</div>
+          <h2>Modules de la plateforme</h2>
+          <p>Chaque module répond à un besoin métier précis de la supervision réseau télécom.</p>
+        </div>
+
+        <div class="row gy-4">
+
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+            <div class="module-card">
+              <div class="mc-icon" style="background:rgba(0,212,255,0.1);color:var(--accent-color);border:1px solid rgba(0,212,255,0.2)">
+                <i class="bi bi-speedometer2"></i>
+              </div>
+              <h3>Dashboard Global</h3>
+              <p>KPI réseau temps réel — incidents ouverts, critiques, en cours de maintenance, techniciens disponibles, MTTR moyen. Refresh automatique toutes les 15s.</p>
+              <span class="mc-tag" style="background:rgba(0,212,255,0.08);color:var(--accent-color)">NOC Employé</span>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="150">
+            <div class="module-card">
+              <div class="mc-icon" style="background:rgba(255,60,110,0.1);color:#ff3c6e;border:1px solid rgba(255,60,110,0.2)">
+                <i class="bi bi-map-fill"></i>
+              </div>
+              <h3>Carte Géographique</h3>
+              <p>Carte interactive Leaflet.js — 120 équipements Huawei, incidents OUVERT et EN_COURS, 30 techniciens géolocalisés sur 10 secteurs. Dispatch direct depuis la carte.</p>
+              <span class="mc-tag" style="background:rgba(255,60,110,0.08);color:#ff3c6e">Leaflet + OpenStreetMap</span>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+            <div class="module-card">
+              <div class="mc-icon" style="background:rgba(255,165,0,0.1);color:#ffa500;border:1px solid rgba(255,165,0,0.2)">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+              </div>
+              <h3>Gestion Incidents</h3>
+              <p>Liste filtrée par sévérité (CRITIQUE/MAJEUR/MINEUR), statut et secteur. Types : PANNE_COMPLETE, COUPURE_FIBRE, INTERFERENCE, ALARME_RESEAU, MISE_A_JOUR, SURCHARGE, DEGRADATION.</p>
+              <span class="mc-tag" style="background:rgba(255,165,0,0.08);color:#ffa500">BTS · Fibre · IP · RF</span>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="250">
+            <div class="module-card">
+              <div class="mc-icon" style="background:rgba(130,80,255,0.1);color:#8250ff;border:1px solid rgba(130,80,255,0.2)">
+                <i class="bi bi-ticket-detailed-fill"></i>
+              </div>
+              <h3>Système de Tickets</h3>
+              <p>Création à l'assignation, cycle terrain : NULL → EN_ROUTE → SUR_SITE → EN_COURS → COMPLETE/INCOMPLET. Fermeture automatique si durée estimée dépassée.</p>
+              <span class="mc-tag" style="background:rgba(130,80,255,0.08);color:#8250ff">Cycle complet terrain</span>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+            <div class="module-card">
+              <div class="mc-icon" style="background:rgba(0,200,100,0.1);color:#00c864;border:1px solid rgba(0,200,100,0.2)">
+                <i class="bi bi-people-fill"></i>
+              </div>
+              <h3>Gestion Techniciens</h3>
+              <p>30 techniciens avec compétences (RF, FIBRE, ALIMENTATION, RESEAU_IP…), disponibilité temps réel, note de performance, secteur d'affectation.</p>
+              <span class="mc-tag" style="background:rgba(0,200,100,0.08);color:#00c864">Terrain</span>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="350">
+            <div class="module-card">
+              <div class="mc-icon" style="background:rgba(0,150,255,0.1);color:#0096ff;border:1px solid rgba(0,150,255,0.2)">
+                <i class="bi bi-file-earmark-bar-graph-fill"></i>
+              </div>
+              <h3>Rapports & Exports</h3>
+              <p>Planning journalier Gantt par technicien, export Excel avec dates, durées réelles et causes. Historique consultable par date.</p>
+              <span class="mc-tag" style="background:rgba(0,150,255,0.08);color:#0096ff">Gantt + Export Excel</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CALL TO ACTION ─────────────────────── -->
+    <section id="call-to-action">
+      <div class="cta-glow"></div>
+      <div class="container">
+        <div class="cta-box" data-aos="zoom-in">
+          <div class="section-tag">Accès plateforme</div>
+          <h2>Prêt à superviser<br>votre réseau ?</h2>
+          <p>Connectez-vous à votre espace de travail — NOC employé ou technicien terrain — et prenez le contrôle de vos infrastructures télécom.</p>
+          <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a href="noc_admin.html" class="btn-primary-custom" style="color: white;">
+              <i class="bi bi-person-badge" style="color: white;"></i>
+              Espace Employé NOC
+            </a>
+            <a href="tech.html" class="btn-secondary-custom">
+              <i class="bi bi-tools"></i>
+              Espace Technicien
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FEATURES / RÔLES ───────────────────── -->
+    <section id="features">
+      <div class="container">
+
+        <div class="section-header" data-aos="fade-up">
+          <div class="section-tag">Accès par rôle</div>
+          <h2>Deux espaces,<br>deux expériences</h2>
+          <p>Chaque utilisateur accède à une interface adaptée à son rôle métier.</p>
+        </div>
+
+        <div class="row gy-4">
+
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
+            <div class="role-card featured-role">
+              <div class="role-badge emp"><i class="bi bi-building"></i> NOC Employé</div>
+              <h3>Centre Opérationnel Réseau</h3>
+              <p>Pilotage global de l'infrastructure — supervision en temps réel, dispatch des techniciens, suivi des tickets et analyse des KPI réseau.</p>
+              <ul class="role-features">
+                <li><i class="bi bi-check-circle-fill"></i> Dashboard KPI global temps réel</li>
+                <li><i class="bi bi-check-circle-fill"></i> Carte interactive incidents + techniciens</li>
+                <li><i class="bi bi-check-circle-fill"></i> Dispatch intelligent par proximité</li>
+                <li><i class="bi bi-check-circle-fill"></i> Popups temps réel changements statut</li>
+                <li><i class="bi bi-check-circle-fill"></i> Gantt journalier + historique + export Excel</li>
+                <li><i class="bi bi-check-circle-fill"></i> Bouton appel technicien si retard</li>
+              </ul>
+              <a href="login.html" class="role-login-btn emp-btn" style="color: white;">
+                <i class="bi bi-box-arrow-in-right" style="color: white;"></i>
+                Se connecter — NOC
+              </a>
+            </div>
+          </div>
+
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
+            <div class="role-card">
+              <div class="role-badge tech"><i class="bi bi-tools"></i> Technicien Terrain</div>
+              <h3>Interface Terrain</h3>
+              <p>Gestion des tickets assignés — mise à jour du statut en temps réel, signalement de retards ou blocages, rapport d'intervention.</p>
+              <ul class="role-features">
+                <li><i class="bi bi-check-circle-fill"></i> Mes tickets assignés</li>
+                <li><i class="bi bi-check-circle-fill"></i> Mise à jour statut EN_ROUTE → SUR_SITE → EN_COURS</li>
+                <li><i class="bi bi-check-circle-fill"></i> Popup notification nouveau ticket assigné</li>
+                <li><i class="bi bi-check-circle-fill"></i> Actions bloquées si durée dépassée</li>
+                <li><i class="bi bi-check-circle-fill"></i> Clôture COMPLETE ou INCOMPLET avec cause</li>
+                <li><i class="bi bi-check-circle-fill"></i> Historique de mes interventions</li>
+              </ul>
+              <a href="login.html" class="role-login-btn tech-btn">
+                <i class="bi bi-box-arrow-in-right"></i>
+                Se connecter — Technicien
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FAQ ───────────────────────────────── -->
+    <section id="faq">
+      <div class="container">
+
+        <div class="section-header" data-aos="fade-up">
+          <div class="section-tag">Questions fréquentes</div>
+          <h2>FAQ</h2>
+        </div>
+
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+
+            <div class="faq-container">
+
+            
+
+              <div class="faq-item" data-aos="fade-up" data-aos-delay="150">
+                <h3>
+                  <i class="faq-icon bi bi-question-circle"></i>
+                  Comment fonctionne l'assignation automatique des tickets ?
+                  <i class="faq-toggle bi bi-chevron-right"></i>
+                </h3>
+                <div class="faq-content">
+                  <p>L'admin NOC sélectionne l'incident et clique sur Dispatch. Le système trie les techniciens disponibles par : compétence correspondant au type d'incident (RF, FIBRE, ALIMENTATION...), même secteur géographique, meilleure note de performance, puis distance. Le premier de la liste reçoit un badge "★ Meilleur".</p>
+                </div>
+              </div>
+
+              <div class="faq-item" data-aos="fade-up" data-aos-delay="200">
+                <h3>
+                  <i class="faq-icon bi bi-question-circle"></i>
+                  Quels types d'équipements sont supervisés ?
+                  <i class="faq-toggle bi bi-chevron-right"></i>
+                </h3>
+                <div class="faq-content">
+                  <p>8 types d'équipements Huawei : BTS 2G/3G/4G/5G, Routeur backbone (NE40E-X8), Switch distribution (ATN910C), OLT Fibre, et Antennes sectorielles — répartis sur 10 secteurs couvrant les principales villes marocaines.</p>
+                </div>
+              </div>
+
+              <div class="faq-item" data-aos="fade-up" data-aos-delay="250">
+                <h3>
+                  <i class="faq-icon bi bi-question-circle"></i>
+                  La carte géographique est-elle gratuite ?
+                  <i class="faq-toggle bi bi-chevron-right"></i>
+                </h3>
+                <div class="faq-content">
+                  <p>Oui — la plateforme utilise Leaflet.js avec OpenStreetMap, 100% gratuit, sans clé API ni carte bancaire. Les équipements, incidents et techniciens sont affichés en temps réel via les coordonnées GPS stockées dans le DWH.</p>
+                </div>
+              </div>
+
+              <div class="faq-item" data-aos="fade-up" data-aos-delay="300">
+                <h3>
+                  <i class="faq-icon bi bi-question-circle"></i>
+                  Quels KPI sont calculés par l'ETL ?
+                  <i class="faq-toggle bi bi-chevron-right"></i>
+                </h3>
+                <div class="faq-content">
+                  <p>Incidents ouverts et critiques (décrémentés à la résolution), techniciens disponibles, tickets actifs, MTTR moyen, durée estimée moyenne. Les KPI sont recalculés en temps réel depuis PostgreSQL toutes les 15 secondes.</p>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── FOOTER ─────────────────────────────── -->
+  <footer id="footer" class="footer">
+    <div class="container footer-top">
+      <div class="row gy-5">
+
+        <div class="col-lg-5 col-md-12 footer-about">
+          <a href="index.html" class="logo d-flex align-items-center">
+            <div class="logo-icon me-2" style="width:30px;height:30px;background:linear-gradient(135deg,var(--accent-color),#0066ff);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px">
+              <i class="bi bi-reception-4"></i>
+            </div>
+            <span class="sitename" style="color: white;">Net<span style="color: rgb(0, 12, 63);">Vision</span></span>
+          </a>
+          <p>Plateforme BI de supervision et pilotage des infrastructures télécom Huawei. Gestion des incidents, dispatch techniciens, analyse KPI réseau.</p>
+          <div class="social-links d-flex mt-3">
+            <a href="#"><i class="bi bi-github"></i></a>
+            <a href="#"><i class="bi bi-linkedin"></i></a>
+            <a href="#"><i class="bi bi-envelope"></i></a>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-6 footer-links">
+          <h4>Navigation</h4>
+          <ul>
+            <li><a href="#hero" style="color: white;">Accueil</a></li>
+            <li><a href="#about" style="color: white;">Architecture</a></li>
+            <li><a href="#services" style="color: white;">Modules</a></li>
+            <li><a href="#features" style="color: white;">Rôles</a></li>
+            <li><a href="#faq" style="color: white;">FAQ</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-2 col-6 footer-links">
+          <h4>Modules</h4>
+          <ul>
+            <li><a href="#" style="color: white;">Dashboard KPI</a></li>
+            <li><a href="#" style="color: white;">Carte réseau</a></li>
+            <li><a href="#" style="color: white;">Incidents</a></li>
+            <li><a href="#" style="color: white;">Tickets</a></li>
+            <li><a href="#" style="color: white;">Rapports</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-3 col-md-12 footer-contact">
+          <h4>Pipeline</h4>
+          <p><strong>Technologie :</strong> Python · Flask · PostgreSQL</p>
+          <p><strong>Frontend :</strong> Bootstrap · Leaflet.js</p>
+          <p><strong>Données :</strong> 300 incidents · 120 équipements · 30 techniciens</p>
+          <p class="mt-3"><strong>Secteurs :</strong> 10 régions du Maroc</p>
+          <p><strong>Équipements :</strong> Huawei BTS 2G/3G/4G · Routeur · OLT · Antenne</p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="container copyright text-center mt-4">
+      <p>© 2026 <strong class="sitename">Net<span>Vision</span></strong> — Plateforme de Supervision Réseau Huawei</p>
+    </div>
+  </footer>
+
+  <!-- Scroll Top -->
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
+    <i class="bi bi-arrow-up-short"></i>
+  </a>
+
+  <!-- Preloader -->
+  <div id="preloader"></div>
+
+  <!-- Vendor JS Files -->
+  <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/vendor/aos/aos.js"></script>
+  <script src="assets/vendor/purecounter/purecounter_vanilla.js"></script>
+  <script src="assets/vendor/glightbox/js/glightbox.min.js"></script>
+  <script src="assets/vendor/swiper/swiper-bundle.min.js"></script>
+  <script src="assets/js/main.js"></script>
+
+  <script>
+    // FAQ toggle
+    document.querySelectorAll('.faq-item h3').forEach(h3 => {
+      h3.addEventListener('click', () => {
+        const item = h3.closest('.faq-item');
+        const isActive = item.classList.contains('faq-active');
+        document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('faq-active'));
+        if (!isActive) item.classList.add('faq-active');
+      });
+    });
+  </script>
+
+</body>
+</html>
