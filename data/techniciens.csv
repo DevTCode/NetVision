@@ -1,0 +1,31 @@
+id,matricule,nom,prenom,telephone,secteur_id,secteur_nom,latitude,longitude,competences,statut,annees_exp,note_perf,heure_debut,heure_fin,capacite_tickets,ticket_actif_id,raison_indisponibilite
+1,TECH-001,BENALI,Youssef,+212 624 572 220,5,Tanger,35.77324,-5.819878,"[""Maintenance BTS"", ""4G/LTE""]",DISPONIBLE,8,4.9,09:00,18:00,1,,
+2,TECH-002,ELHASSANI,Fatima,+212 641 567 664,5,Tanger,35.761898,-5.895237,"[""4G/LTE"", ""Fibre"", ""Optique""]",INDISPONIBLE,15,4.2,09:00,18:00,1,,Formation interne
+3,TECH-003,OUALI,Mohammed,+212 674 373 940,2,Rabat-Salé,33.960426,-6.76322,"[""2G/3G"", ""5G"", ""Maintenance BTS""]",DISPONIBLE,14,4.2,09:00,18:00,1,,
+4,TECH-004,CHRAIBI,Amina,+212 680 881 656,8,Oujda,34.785419,-1.925847,"[""Fibre"", ""Optique"", ""5G""]",DISPONIBLE,14,3.4,09:00,18:00,1,,
+5,TECH-005,BENKIRANE,Hamza,+212 670 822 930,4,Fès,34.037505,-5.07981,"[""Fibre"", ""Optique"", ""4G/LTE""]",DISPONIBLE,8,4.9,09:00,18:00,1,,
+6,TECH-006,TAZI,Zineb,+212 666 202 638,3,Marrakech,31.630119,-7.956727,"[""Fibre"", ""2G/3G""]",INDISPONIBLE,12,3.3,09:00,18:00,1,,Formation interne
+7,TECH-007,BERRADA,Anas,+212 660 765 182,2,Rabat-Salé,34.012654,-6.714788,"[""Optique"", ""5G"", ""Routage IP""]",DISPONIBLE,7,4.9,09:00,18:00,1,,
+8,TECH-008,FILALI,Nadia,+212 697 394 332,8,Oujda,34.787344,-2.036833,"[""Maintenance BTS"", ""2G/3G""]",DISPONIBLE,7,5.0,09:00,18:00,1,,
+9,TECH-009,BENSOUDA,Karim,+212 617 400 467,2,Rabat-Salé,34.005678,-6.789167,"[""5G"", ""Fibre""]",DISPONIBLE,3,3.5,09:00,18:00,1,,
+10,TECH-010,LAHLOU,Sara,+212 688 991 491,7,Meknès,33.911318,-5.475641,"[""Routage IP"", ""Maintenance BTS""]",DISPONIBLE,4,4.0,09:00,18:00,1,,
+11,TECH-011,MOUSSAOUI,Mehdi,+212 695 109 923,10,Tétouan,35.482045,-5.3789,"[""Fibre"", ""5G"", ""Routage IP""]",DISPONIBLE,3,3.1,09:00,18:00,1,,
+12,TECH-012,ALAMI,Hajar,+212 668 965 409,6,Agadir,30.559598,-9.652383,"[""4G/LTE"", ""Fibre"", ""Maintenance BTS""]",DISPONIBLE,2,3.5,09:00,18:00,1,,
+13,TECH-013,SQALLI,Rachid,+212 694 505 381,10,Tétouan,35.540381,-5.42357,"[""2G/3G"", ""Routage IP"", ""Optique"", ""Fibre""]",DISPONIBLE,14,4.8,09:00,18:00,1,,
+14,TECH-014,BENOMAR,Salma,+212 634 735 356,5,Tanger,35.834025,-5.906941,"[""Maintenance BTS"", ""Optique"", ""4G/LTE""]",DISPONIBLE,11,3.2,09:00,18:00,1,,
+15,TECH-015,MRANI,Bilal,+212 626 192 402,1,Grand Casablanca,33.52146,-7.605794,"[""5G"", ""Maintenance BTS"", ""Fibre"", ""4G/LTE""]",DISPONIBLE,4,3.3,09:00,18:00,1,,
+16,TECH-016,KETTANI,Houda,+212 631 363 944,9,Kenitra,34.362746,-6.616455,"[""Fibre"", ""5G"", ""Maintenance BTS"", ""2G/3G""]",INDISPONIBLE,8,4.9,09:00,18:00,1,,Formation interne
+17,TECH-017,BELKADI,Ayoub,+212 681 474 192,4,Fès,34.115435,-4.947201,"[""Optique"", ""Fibre"", ""2G/3G""]",INDISPONIBLE,5,4.1,09:00,18:00,1,,Mission hors secteur
+18,TECH-018,NACIRI,Loubna,+212 691 480 210,6,Agadir,30.47451,-9.551521,"[""Maintenance BTS"", ""4G/LTE"", ""Fibre"", ""2G/3G""]",DISPONIBLE,10,4.8,09:00,18:00,1,,
+19,TECH-019,FASSI,Omar,+212 669 817 409,9,Kenitra,34.214515,-6.550448,"[""Maintenance BTS"", ""Fibre"", ""2G/3G"", ""4G/LTE""]",DISPONIBLE,1,4.9,09:00,18:00,1,,
+20,TECH-020,BOUAYAD,Meriem,+212 627 497 564,5,Tanger,35.893534,-5.937751,"[""5G"", ""Maintenance BTS""]",INDISPONIBLE,12,4.4,09:00,18:00,1,,Réunion équipe technique
+21,TECH-021,ZEMMOURI,Soufiane,+212 672 730 517,7,Meknès,33.917105,-5.493457,"[""5G"", ""2G/3G"", ""Optique""]",DISPONIBLE,4,3.9,09:00,18:00,1,,
+22,TECH-022,CHERKAOUI,Kawtar,+212 692 467 162,4,Fès,34.114168,-5.116083,"[""Fibre"", ""5G"", ""4G/LTE"", ""2G/3G""]",DISPONIBLE,14,4.6,09:00,18:00,1,,
+23,TECH-023,REGRAGUI,Adil,+212 616 905 441,2,Rabat-Salé,34.064892,-6.803301,"[""4G/LTE"", ""Optique"", ""Routage IP"", ""Maintenance BTS""]",INDISPONIBLE,2,4.7,09:00,18:00,1,,Réunion équipe technique
+24,TECH-024,BENMOUSSA,Ghita,+212 628 907 710,4,Fès,34.041447,-4.923191,"[""2G/3G"", ""5G""]",DISPONIBLE,14,5.0,09:00,18:00,1,,
+25,TECH-025,IDRISSI,Ilyas,+212 613 234 115,3,Marrakech,31.640369,-7.900421,"[""5G"", ""4G/LTE""]",DISPONIBLE,10,3.6,09:00,18:00,1,,
+26,TECH-026,TAHIRI,Rim,+212 618 587 559,3,Marrakech,31.566086,-8.081976,"[""Optique"", ""5G"", ""Routage IP""]",DISPONIBLE,10,3.2,09:00,18:00,1,,
+27,TECH-027,BENSLIMANE,Tariq,+212 694 633 408,9,Kenitra,34.185743,-6.54909,"[""Fibre"", ""Maintenance BTS"", ""2G/3G"", ""Routage IP""]",DISPONIBLE,8,4.7,09:00,18:00,1,,
+28,TECH-028,ELMANSOURI,Kenza,+212 620 429 722,7,Meknès,33.943797,-5.55733,"[""4G/LTE"", ""2G/3G"", ""Optique""]",DISPONIBLE,5,4.2,09:00,18:00,1,,
+29,TECH-029,DOUKKALI,Reda,+212 668 617 719,10,Tétouan,35.591569,-5.415647,"[""Fibre"", ""2G/3G"", ""Maintenance BTS"", ""4G/LTE""]",DISPONIBLE,7,3.9,09:00,18:00,1,,
+30,TECH-030,JADID,Yasmine,+212 622 420 537,4,Fès,33.994806,-4.919308,"[""5G"", ""Maintenance BTS"", ""Optique""]",DISPONIBLE,6,4.9,09:00,18:00,1,,
