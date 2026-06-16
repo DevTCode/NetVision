@@ -1,0 +1,72 @@
+[
+  {
+    "id": 1,
+    "nom": "Grand Casablanca",
+    "region": "Casablanca-Settat",
+    "lat": 33.5731,
+    "lng": -7.5898
+  },
+  {
+    "id": 2,
+    "nom": "Rabat-Salé",
+    "region": "Rabat-Salé-Kénitra",
+    "lat": 34.0209,
+    "lng": -6.8416
+  },
+  {
+    "id": 3,
+    "nom": "Marrakech",
+    "region": "Marrakech-Safi",
+    "lat": 31.6295,
+    "lng": -7.9811
+  },
+  {
+    "id": 4,
+    "nom": "Fès",
+    "region": "Fès-Meknès",
+    "lat": 34.0181,
+    "lng": -5.0078
+  },
+  {
+    "id": 5,
+    "nom": "Tanger",
+    "region": "Tanger-Tétouan-Al Hoceima",
+    "lat": 35.7595,
+    "lng": -5.834
+  },
+  {
+    "id": 6,
+    "nom": "Agadir",
+    "region": "Souss-Massa",
+    "lat": 30.4278,
+    "lng": -9.5981
+  },
+  {
+    "id": 7,
+    "nom": "Meknès",
+    "region": "Fès-Meknès",
+    "lat": 33.8935,
+    "lng": -5.5547
+  },
+  {
+    "id": 8,
+    "nom": "Oujda",
+    "region": "Oriental",
+    "lat": 34.6867,
+    "lng": -1.9114
+  },
+  {
+    "id": 9,
+    "nom": "Kenitra",
+    "region": "Rabat-Salé-Kénitra",
+    "lat": 34.261,
+    "lng": -6.5802
+  },
+  {
+    "id": 10,
+    "nom": "Tétouan",
+    "region": "Tanger-Tétouan-Al Hoceima",
+    "lat": 35.5785,
+    "lng": -5.3684
+  }
+]
