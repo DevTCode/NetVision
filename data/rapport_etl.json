@@ -1,0 +1,20 @@
+{
+  "date_etl": "2026-06-14T19:01:11.238597",
+  "nb_secteurs": 10,
+  "nb_equipements": 120,
+  "nb_techniciens": 30,
+  "nb_incidents": 300,
+  "nb_tickets": 0,
+  "kpi": {
+    "incidents_ouverts": 300,
+    "duree_estimee_moy_min": 220,
+    "techniciens_disponibles": 24,
+    "techniciens_indisponibles": 6
+  },
+  "repartition_severite": {
+    "MINEUR": 115,
+    "MAJEUR": 69,
+    "CRITIQUE": 116
+  },
+  "heure_pic_incidents": 14
+}
