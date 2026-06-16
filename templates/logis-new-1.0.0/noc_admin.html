@@ -1,0 +1,2680 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TélécomBI — NOC Admin</title>
+
+<!-- Fonts Poppins + Roboto (main.css) -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!-- Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+<!-- Leaflet -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+/* ══ VARIABLES — reprises de main.css ══════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500&display=swap');
+
+:root {
+  color-scheme: dark;
+
+  --font-heading: "Poppins", sans-serif;
+  --font-body:    "Roboto", system-ui, sans-serif;
+
+  /* Palette reprise telle quelle de main.css (index.html) :
+     --bg      = main.css :root --background-color (#002c61)
+     --bg2     = main.css .dark-background --background-color (#0e1d34)
+     --surface = main.css :root --accent-color/--surface-color (#000722)
+     --surface2= main.css .dark-background --surface-color (#19335c) */
+  --bg:       #002c61;
+  --bg2:      #0e1d34;
+  --surface:  #000722;
+  --surface2: #19335c;
+  --border:   rgba(0,212,255,0.08);
+  --border2:  rgba(0,212,255,0.18);
+
+  /* Accent & statuts — déjà identiques aux couleurs codées en dur de main.css */
+  --accent:   #00d4ff;
+  --accent2:  #0066ff;
+  --red:      #ff3c6e;
+  --amber:    #ffa500;
+  --green:    #00c864;
+  --purple:   #8250ff;
+  /* Texte — main.css #hero p / .hero-stat-item .label : rgba(200,212,232,x) */
+  --text:     #c8d4e8;
+  --text-dim: rgba(200,212,232,0.45);
+
+  --glow:   0 0 20px rgba(0,212,255,0.18);
+  --glow-r: 0 0 20px rgba(255,60,110,0.18);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  position: relative;
+}
+
+/* Grid + bruit — comme main.css */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events:none; z-index:0;
+}
+
+/* ══ SIDEBAR ════════════════════════════════════════════════ */
+.sidebar {
+  width: 230px;
+  background: rgba(0,7,34,0.96);
+  backdrop-filter: blur(16px);
+  border-right: 1px solid var(--border2);
+  display: flex; flex-direction: column;
+  padding: 18px 14px; gap: 4px;
+  flex-shrink: 0; position: relative; z-index: 100;
+  height: 100vh; overflow-y: auto;
+}
+.sidebar::after {
+  content:''; position:absolute; top:0; right:0; bottom:0; width:1px;
+  background: linear-gradient(180deg, transparent, var(--accent), transparent);
+  opacity: 0.35;
+}
+
+/* ══ MAIN ═══════════════════════════════════════════════════ */
+.main-wrap {
+  flex: 1; height: 100vh; overflow: hidden;
+  display: flex; flex-direction: column;
+  position: relative; z-index: 1; min-width: 0;
+}
+
+.logo-wrap { display:flex; align-items:center; gap:10px; padding:4px 6px 18px; margin-bottom:10px; border-bottom:1px solid var(--border2); }
+.logo-icon-wrap {
+  width:34px; height:34px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius:8px; display:flex; align-items:center; justify-content:center;
+  font-size:16px; color:#fff; flex-shrink:0;
+}
+.logo-name {
+  font-family: var(--font-heading);
+  font-size:17px; font-weight:800; color:#fff; letter-spacing:-0.5px;
+}
+.logo-name span { color: var(--accent); }
+.logo-role { font-size:10px; color:var(--text-dim); letter-spacing:0.8px; text-transform:uppercase; }
+
+/* Nav pills — verticales dans la sidebar */
+.nav-pills { display:flex; flex-direction:column; gap:4px; flex:1; }
+.npill {
+  width:100%; padding:11px 14px; background:transparent; border:none;
+  font-family:var(--font-heading); font-size:13px; font-weight:500;
+  color:var(--text-dim); border-radius:8px; cursor:pointer;
+  transition:all .2s; display:flex; align-items:center; gap:10px;
+  letter-spacing:0.2px; position:relative; text-align:left;
+  border-left:3px solid transparent;
+}
+.npill i { font-size:15px; width:18px; text-align:center; }
+.npill:hover { background:rgba(0,212,255,0.07); color:var(--text); }
+.npill.active {
+  background:rgba(0,212,255,0.12); color:var(--accent);
+  border-left:3px solid var(--accent); border-radius:0 8px 8px 0;
+}
+.nbadge {
+  position:absolute; top:8px; right:10px;
+  background:var(--red); color:#fff; font-size:8px;
+  width:14px; height:14px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; font-weight:700;
+}
+
+/* ══ SIDEBAR FOOTER (statut + actions) ═════════════════════ */
+.sidebar-footer {
+  display:flex; flex-direction:column; gap:10px;
+  padding-top:14px; margin-top:10px; border-top:1px solid var(--border2);
+}
+.sidebar-status { display:flex; align-items:center; gap:8px; padding:0 6px; }
+.clock {
+  font-family:var(--font-heading); font-size:13px;
+  color:var(--accent); letter-spacing:1px;
+}
+.switch-btn, .logout-btn {
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  width:100%; padding:9px 12px; border-radius:7px;
+  font-family:var(--font-heading); font-size:12px; font-weight:500;
+  cursor:pointer; transition:all .2s;
+}
+.switch-btn {
+  border:1px solid rgba(0,200,100,0.3);
+  background:rgba(0,200,100,0.07); color:var(--green);
+}
+.switch-btn:hover { background:rgba(0,200,100,0.15); }
+.logout-btn {
+  border:1px solid rgba(255,60,110,0.3);
+  background:rgba(255,60,110,0.07); color:var(--red);
+}
+.logout-btn:hover { background:rgba(255,60,110,0.15); }
+.live-dot {
+  width:7px; height:7px; border-radius:50%; background:var(--green);
+  box-shadow:0 0 8px var(--green); animation:pulse 2s infinite; flex-shrink:0;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ══ PAGES ══════════════════════════════════════════════════ */
+.page { display:none; flex:1; overflow:hidden; }
+.page.active { display:flex; flex-direction:column; }
+
+/* ══ SCROLL BODY ════════════════════════════════════════════ */
+.scroll-body {
+  flex:1; overflow-y:auto; padding:20px;
+  display:flex; flex-direction:column; gap:16px;
+}
+.scroll-body::-webkit-scrollbar { width:4px; }
+.scroll-body::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+/* ══ CARDS ══════════════════════════════════════════════════ */
+.card {
+  background: var(--surface);
+  border: 0.5px solid var(--border2);
+  border-radius: 12px;
+  padding: 18px 20px;
+  position: relative; overflow: hidden;
+}
+.card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity:0; transition: opacity .3s;
+}
+.card:hover::before { opacity:0.4; }
+
+.card-title {
+  font-family: var(--font-heading);
+  font-size:11px; font-weight:600; color:var(--text-dim);
+  text-transform:uppercase; letter-spacing:1px; margin-bottom:14px;
+  display:flex; align-items:center; gap:7px;
+}
+.card-title i { font-size:14px; color:var(--accent); }
+
+/* ══ KPI GRID ═══════════════════════════════════════════════ */
+.kpi-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:9px; }
+.kpi-card {
+  background: var(--surface); border:0.5px solid var(--border2);
+  border-radius:12px; padding:18px 20px;
+  position:relative; overflow:hidden; transition:transform .2s, box-shadow .2s;
+}
+.kpi-card:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(0,0,0,0.3); }
+.kpi-card::after {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  border-radius:12px 12px 0 0;
+}
+.kpi-card.red::after    { background:linear-gradient(90deg,var(--red),#cc1a4a); }
+.kpi-card.amber::after  { background:linear-gradient(90deg,var(--amber),#cc7000); }
+.kpi-card.blue::after   { background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+.kpi-card.green::after  { background:linear-gradient(90deg,var(--green),#009940); }
+.kpi-card.purple::after { background:linear-gradient(90deg,var(--purple),#5a1fd1); }
+
+.kpi-icon { font-size:20px; margin-bottom:10px; }
+.kpi-val {
+  font-family:var(--font-heading); font-size:30px; font-weight:800;
+  line-height:1; margin-bottom:5px; letter-spacing:-1px;
+}
+.kpi-val.red    { color:var(--red);    text-shadow:var(--glow-r); }
+.kpi-val.amber  { color:var(--amber); }
+.kpi-val.blue   { color:var(--accent); text-shadow:var(--glow); }
+.kpi-val.green  { color:var(--green);  text-shadow:0 0 16px rgba(0,200,100,.3); }
+.kpi-val.purple { color:var(--purple); }
+.kpi-lbl {
+  font-family:var(--font-heading); font-size:10px; font-weight:600;
+  color:var(--text-dim); letter-spacing:0.8px; text-transform:uppercase;
+}
+.kpi-sub { font-size:10px; color:var(--text-dim); margin-top:3px; }
+
+/* ══ CHARTS ═════════════════════════════════════════════════ */
+.row3 { display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px; }
+.row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+canvas { max-height:190px; }
+
+/* ══ TABLE ══════════════════════════════════════════════════ */
+.tbl { width:100%; border-collapse:collapse; font-size:12px; }
+.tbl th {
+  text-align:left; padding:8px 11px;
+  font-family:var(--font-heading); font-size:10px; font-weight:600;
+  text-transform:uppercase; letter-spacing:0.8px; color:var(--text-dim);
+  border-bottom:1px solid var(--border2);
+}
+.tbl td { padding:9px 11px; border-bottom:0.5px solid var(--border); vertical-align:middle; }
+.tbl tr:last-child td { border-bottom:none; }
+.tbl tr:hover td { background:rgba(0,212,255,0.03); cursor:pointer; }
+.tbl-scroll { overflow-y:auto; max-height:240px; }
+.tbl-scroll::-webkit-scrollbar { width:3px; }
+.tbl-scroll::-webkit-scrollbar-thumb { background:var(--border2); }
+
+/* ══ BADGES ═════════════════════════════════════════════════ */
+.badge {
+  display:inline-block; font-size:10px; padding:2px 9px;
+  border-radius:20px; font-weight:600; letter-spacing:0.4px;
+  font-family:var(--font-heading);
+}
+.badge.CRITIQUE  { background:rgba(255,60,110,.14); color:var(--red);    border:1px solid rgba(255,60,110,.28); }
+.badge.MAJEUR    { background:rgba(255,165,0,.12);  color:var(--amber);  border:1px solid rgba(255,165,0,.28); }
+.badge.MINEUR    { background:rgba(255,204,0,.10);  color:#ffcc00;       border:1px solid rgba(255,204,0,.22); }
+.badge.OUVERT    { background:rgba(255,60,110,.10); color:var(--red);    border:1px solid rgba(255,60,110,.22); }
+.badge.EN_COURS  { background:rgba(0,212,255,.10);  color:var(--accent); border:1px solid rgba(0,212,255,.22); }
+.badge.RESOLU    { background:rgba(0,200,100,.12);  color:var(--green);  border:1px solid rgba(0,200,100,.28); }
+.badge.FERME     { background:rgba(0,200,100,.08);  color:var(--green);  border:1px solid rgba(0,200,100,.18); }
+.badge.DISPO     { background:rgba(0,200,100,.12);  color:var(--green);  border:1px solid rgba(0,200,100,.28); }
+.badge.INTER     { background:rgba(255,165,0,.12);  color:var(--amber);  border:1px solid rgba(255,165,0,.28); }
+.badge.INDISPO   { background:rgba(100,100,100,.14);color:var(--text-dim);border:1px solid rgba(100,100,100,.28); }
+.badge.EN_PAUSE  { background:rgba(255,149,0,.14);color:#ff9500;border:1px solid rgba(255,149,0,.35); }
+.mono { font-family:monospace; font-size:11px; color:rgba(0,212,255,0.65); }
+
+/* ══ BTN DISPATCH ═══════════════════════════════════════════ */
+.btn-dispatch {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:5px 13px; border-radius:7px;
+  border:1px solid var(--accent); background:transparent;
+  color:var(--accent); font-family:var(--font-heading);
+  font-size:10px; font-weight:600; cursor:pointer; transition:all .2s;
+}
+.btn-dispatch:hover { background:var(--accent); color:#000; box-shadow:var(--glow); }
+
+/* ══ MAP ════════════════════════════════════════════════════ */
+.map-layout { display:flex; flex:1; overflow:hidden; }
+.map-side {
+  width:275px; flex-shrink:0; background:var(--surface);
+  border-right:1px solid var(--border2);
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.map-tabs { display:flex; border-bottom:1px solid var(--border2); flex-shrink:0; }
+.mtab {
+  flex:1; padding:10px 6px; text-align:center;
+  font-family:var(--font-heading); font-size:11px; font-weight:500;
+  cursor:pointer; color:var(--text-dim);
+  border-bottom:2px solid transparent; transition:all .2s;
+}
+.mtab:hover { color:var(--text); }
+.mtab.active { color:var(--accent); border-bottom-color:var(--accent); }
+.map-list { overflow-y:auto; flex:1; }
+.map-list::-webkit-scrollbar { width:3px; }
+.map-list::-webkit-scrollbar-thumb { background:var(--border2); }
+.msec {
+  padding:8px 14px 6px;
+  font-family:var(--font-heading); font-size:9px; font-weight:600;
+  text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim);
+  border-bottom:0.5px solid var(--border);
+}
+.inc-row {
+  padding:10px 14px; border-bottom:0.5px solid var(--border);
+  cursor:pointer; transition:background .15s; position:relative;
+}
+.inc-row:hover { background:rgba(0,212,255,0.04); }
+.inc-row::before {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+}
+.inc-row.CRITIQUE::before { background:var(--red); }
+.inc-row.MAJEUR::before   { background:var(--amber); }
+.inc-row.MINEUR::before   { background:#ffcc00; }
+.inc-code-sm { font-family:monospace; font-size:10px; color:rgba(0,212,255,0.6); }
+.inc-type-sm { font-size:12px; font-weight:500; color:var(--text); margin:2px 0; font-family:var(--font-heading); }
+.inc-meta-sm { font-size:10px; color:var(--text-dim); display:flex; gap:7px; flex-wrap:wrap; }
+.tech-row-sm {
+  padding:9px 14px; border-bottom:0.5px solid var(--border);
+  display:flex; align-items:center; gap:9px; cursor:pointer; transition:background .15s;
+}
+.tech-row-sm:hover { background:rgba(0,212,255,0.04); }
+.tech-av-sm {
+  width:34px; height:34px; border-radius:50%; background:var(--surface2);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-heading); font-size:11px; font-weight:700; flex-shrink:0;
+  border:1.5px solid transparent;
+}
+.tech-av-sm.DISPONIBLE     { border-color:var(--green); color:var(--green); }
+.tech-av-sm.EN_INTERVENTION{ border-color:var(--amber); color:var(--amber); }
+.tech-av-sm.INDISPONIBLE   { border-color:var(--text-dim); color:var(--text-dim); }
+.map-wrap { flex:1; position:relative; overflow:hidden; }
+#map { width:100%; height:100%; }
+#map::after {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,.12),transparent);
+  animation:scan 4s linear infinite; pointer-events:none; z-index:400;
+}
+@keyframes scan { 0%{top:0;opacity:1} 95%{top:100%;opacity:.2} 100%{top:0;opacity:0} }
+.filter-bar-map {
+  position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+  z-index:500; background:rgba(13,30,53,0.96);
+  backdrop-filter:blur(10px);
+  border:1px solid var(--border2); border-radius:10px;
+  display:flex; gap:2px; padding:4px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
+}
+.fmap-btn {
+  padding:6px 14px; background:transparent; border:none; border-radius:7px;
+  color:var(--text-dim); font-family:var(--font-heading); font-size:11px;
+  font-weight:500; cursor:pointer; transition:all .2s;
+}
+.fmap-btn:hover { color:var(--text); background:rgba(0,212,255,0.08); }
+.fmap-btn.active { background:rgba(0,212,255,0.15); color:var(--accent); }
+
+/* Detail panel */
+.detail-panel {
+  width:0; flex-shrink:0; background:var(--surface);
+  border-left:1px solid var(--border2);
+  overflow:hidden; transition:width .3s ease;
+  display:flex; flex-direction:column;
+}
+.detail-panel.open { width:305px; }
+.dp-head {
+  padding:14px 17px; border-bottom:1px solid var(--border2);
+  display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
+}
+.dp-head-title {
+  font-family:var(--font-heading); font-size:11px; font-weight:700;
+  letter-spacing:1px; color:var(--accent); text-transform:uppercase;
+}
+.dp-close { cursor:pointer; color:var(--text-dim); font-size:16px; transition:color .2s; }
+.dp-close:hover { color:var(--red); }
+.dp-body { flex:1; overflow-y:auto; padding:14px 17px; }
+.dp-body::-webkit-scrollbar { width:3px; }
+.dp-body::-webkit-scrollbar-thumb { background:var(--border2); }
+.dp-field { margin-bottom:13px; }
+.dp-label {
+  font-family:var(--font-heading); font-size:9px; font-weight:600;
+  text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:3px;
+}
+.dp-val { font-size:13px; font-weight:500; color:var(--text); }
+.dp-sep { border:none; border-top:0.5px solid var(--border2); margin:13px 0; }
+
+/* Dispatch cards */
+.tdc {
+  background:var(--bg2); border:1px solid var(--border2);
+  border-radius:9px; padding:10px 13px; margin-bottom:8px;
+  cursor:pointer; transition:all .2s;
+}
+.tdc:hover { border-color:var(--accent); background:rgba(0,212,255,0.04); }
+.tdc.selected { border-color:var(--accent); background:rgba(0,212,255,0.08); }
+.tdc.top { border-color:rgba(0,200,100,0.4); position:relative; }
+.tdc.top::before {
+  content:'✦ Recommandé'; position:absolute; top:-1px; right:9px;
+  font-size:8px; color:var(--green); background:var(--surface); padding:0 5px;
+  font-family:var(--font-heading); font-weight:600;
+}
+.tdc-name { font-family:var(--font-heading); font-size:12px; font-weight:600; margin-bottom:4px; }
+.tdc-meta { font-size:10px; color:var(--text-dim); display:flex; gap:10px; }
+.tdc-dist { color:rgba(0,212,255,0.7); font-family:monospace; }
+.btn-assign-full {
+  width:100%; padding:10px; margin-top:10px;
+  border-radius:8px; border:1px solid var(--accent);
+  background:transparent; color:var(--accent);
+  font-family:var(--font-heading); font-size:11px; font-weight:700;
+  letter-spacing:0.8px; cursor:pointer; transition:all .2s;
+}
+.btn-assign-full:hover { background:var(--accent); color:var(--bg); box-shadow:var(--glow); }
+
+/* ══ GANTT ══════════════════════════════════════════════════ */
+.gantt-body {
+  flex:1; overflow:auto; padding:20px;
+  display:flex; flex-direction:column; gap:14px;
+}
+.gantt-body::-webkit-scrollbar { width:4px; height:4px; }
+.gantt-body::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+.gantt-legend { display:flex; gap:16px; flex-wrap:wrap; font-size:11px; color:var(--text-dim); }
+.gleg { display:flex; align-items:center; gap:6px; font-family:var(--font-heading); }
+.gleg-dot { width:14px; height:8px; border-radius:4px; }
+.gantt-chart {
+  background:var(--surface); border:0.5px solid var(--border2); border-radius:12px; overflow:hidden;
+}
+.gantt-row {
+  display:flex; align-items:stretch;
+  border-bottom:0.5px solid var(--border); min-height:52px;
+}
+.gantt-row:last-child { border-bottom:none; }
+.gantt-lbl {
+  width:195px; flex-shrink:0; padding:8px 15px;
+  border-right:1px solid var(--border2);
+  display:flex; flex-direction:column; justify-content:center;
+}
+.glbl-name { font-family:var(--font-heading); font-size:12px; font-weight:600; color:var(--text); }
+.glbl-mat  { font-family:monospace; font-size:9px; color:rgba(0,212,255,.55); margin-top:2px; }
+.gantt-track { flex:1; position:relative; background:var(--bg2); }
+.ghours {
+  display:flex; height:22px; border-bottom:0.5px solid var(--border2);
+  font-size:8px; color:var(--text-dim); font-family:var(--font-heading); font-weight:600;
+}
+.ghcell {
+  flex:1; display:flex; align-items:center; justify-content:center;
+  border-right:0.5px solid var(--border);
+}
+.gbar-row { position:relative; height:30px; }
+.g-pause {
+  position:absolute; height:100%; top:0; z-index:2;
+  background:rgba(30,40,55,0.85);
+  border-left:1px dashed rgba(100,120,140,0.3);
+  border-right:1px dashed rgba(100,120,140,0.3);
+  cursor:not-allowed; user-select:none; pointer-events:all;
+}
+.g-seg {
+  position:absolute; height:22px; top:4px; z-index:3;
+  border-radius:6px; display:flex; align-items:center; gap:4px;
+  padding:0 9px; font-family:var(--font-heading); font-size:9px; font-weight:700;
+  cursor:pointer; overflow:hidden; white-space:nowrap;
+  transition:all .15s; box-shadow:0 1px 5px rgba(0,0,0,.3);
+}
+.g-seg:hover { opacity:.85; transform:translateY(-1px); box-shadow:0 3px 10px rgba(0,0,0,.4); }
+.g-seg::before { content:''; width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.4); flex-shrink:0; }
+.g-seg.EN_ROUTE  { background:linear-gradient(135deg,#1a4fff,#0044cc); color:#fff; border:1px solid rgba(100,150,255,.25); }
+.g-seg.SUR_SITE  { background:linear-gradient(135deg,#ffb700,#ff8c00); color:#000; border:1px solid rgba(255,200,0,.25); }
+.g-seg.EN_COURS  { background:linear-gradient(135deg,#00d4ff,#0099cc); color:#000; border:1px solid rgba(0,200,255,.25); }
+.g-seg.COMPLETE  { background:linear-gradient(135deg,#00c864,#009940); color:#000; border:1px solid rgba(0,200,100,.25); }
+.g-seg.EN_PAUSE  { background:linear-gradient(135deg,#6b7280,#4b5563); color:#fff; border:1px solid rgba(150,160,170,.4); animation:pausePulse 1.5s ease-in-out infinite; }@keyframes pausePulse { 0%,100%{opacity:1} 50%{opacity:0.65} }
+.g-seg.INCOMPLET { background:linear-gradient(135deg,#ff3c6e,#cc1a4a); color:#fff; border:1px solid rgba(255,60,110,.25); }
+.g-seg.PLANIFIE  { background:linear-gradient(135deg,#8250ff,#5a1fd1); color:#fff; border:1px dashed rgba(130,80,255,.4); opacity:.75; }
+.g-seg.ASSIGNE   { background:linear-gradient(135deg,#8250ff,#5a1fd1); color:#fff; border:1px dashed rgba(130,80,255,.4); opacity:.75; }
+.g-seg.PAUSE_TK  { background:rgba(80,100,120,.5); color:var(--text-dim); border:1px solid var(--border2); }
+
+/* Tooltip Gantt */
+.g-tooltip {
+  position:fixed; z-index:9999; pointer-events:none;
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:10px; padding:12px 15px; min-width:210px;
+  box-shadow:0 6px 24px rgba(0,0,0,.6); font-size:11px; line-height:1.6;
+  opacity:0; transition:opacity .15s;
+}
+.g-tooltip.show { opacity:1; }
+.g-tooltip-title {
+  font-family:var(--font-heading); font-size:12px; font-weight:700;
+  color:var(--accent); margin-bottom:7px;
+}
+.g-tooltip-row { display:flex; gap:8px; }
+.g-tooltip-key { color:var(--text-dim); min-width:80px; font-family:var(--font-heading); font-size:10px; }
+.g-tooltip-val { color:var(--text); font-weight:500; }
+
+@keyframes blink-ret { 0%,100%{border-color:rgba(255,60,110,.25)} 50%{border-color:rgba(255,60,110,.6)} }
+
+/* ══ TOAST ══════════════════════════════════════════════════ */
+.toasts {
+  position:fixed; top:18px; right:18px; z-index:9999;
+  display:flex; flex-direction:column; gap:9px;
+}
+.toast {
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:11px; padding:12px 16px;
+  min-width:265px; max-width:330px;
+  display:flex; gap:10px; align-items:flex-start;
+  animation:tin .25s ease; box-shadow:0 4px 24px rgba(0,0,0,.5);
+}
+.toast.success { border-left:3px solid var(--green); }
+.toast.error   { border-left:3px solid var(--red); }
+.toast.info    { border-left:3px solid var(--accent); }
+.toast-icon { font-size:16px; }
+.toast-body { font-size:11px; line-height:1.55; }
+.toast-title { font-family:var(--font-heading); font-weight:700; font-size:12px; margin-bottom:2px; color:var(--text); }
+@keyframes tin { from{opacity:0;transform:translateX(14px)} to{opacity:1;transform:translateX(0)} }
+
+/* ══ LEAFLET OVERRIDES ══════════════════════════════════════ */
+.leaflet-container { background:var(--bg) !important; }
+.leaflet-popup-content-wrapper {
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:10px; color:var(--text);
+  box-shadow:0 4px 20px rgba(0,0,0,.7);
+}
+.leaflet-popup-tip { background:var(--surface); }
+.leaflet-popup-content { margin:11px 13px; font-size:12px; font-family:var(--font-body); }
+.leaflet-control-zoom a {
+  background:var(--surface) !important; color:var(--accent) !important;
+  border-color:var(--border2) !important;
+  font-family:var(--font-heading) !important;
+}
+.leaflet-control-zoom a:hover { background:var(--surface2) !important; }
+.leaflet-control-attribution {
+  background:rgba(6,13,26,.85) !important; color:var(--text-dim) !important;
+  font-size:9px !important;
+}
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<div class="sidebar">
+  <div class="logo-wrap">
+  <div class="logo-icon-wrap"><i class="bi bi-reception-4"></i></div>
+    <div>
+      <div class="logo-name">Net<span>Vision</span></div>
+      <div class="logo-role">NOC Admin</div>
+    </div>
+  </div>
+
+  <nav class="nav-pills">
+    <button class="npill active" onclick="goPage('dashboard',this)">
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </button>
+    <button class="npill" onclick="goPage('carte',this)">
+      <i class="bi bi-map-fill"></i> Carte
+      <span class="nbadge" id="nb-crit">—</span>
+    </button>
+    <button class="npill" onclick="goPage('incidents',this)">
+      <i class="bi bi-exclamation-triangle-fill"></i> Incidents
+    </button>
+    <button class="npill" onclick="goPage('techniciens',this)">
+      <i class="bi bi-people-fill"></i> Techniciens
+    </button>
+    <button class="npill" onclick="goPage('gantt',this)">
+      <i class="bi bi-calendar3"></i> Gantt
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-status">
+      <div class="live-dot"></div>
+      <div class="clock" id="clock">--:--:--</div>
+    </div>
+    <span id="api-status" style="font-size:10px;color:var(--amber);font-family:var(--font-heading);letter-spacing:0.5px;padding:0 6px">● Connexion...</span>
+
+    <button class="logout-btn" onclick="confirmLogout()" title="Se déconnecter">
+      <i class="bi bi-box-arrow-right"></i> Déconnexion
+    </button>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main-wrap">
+
+<!-- ══ PAGE: DASHBOARD ══ -->
+<div class="page active" id="page-dashboard">
+  <div class="scroll-body">
+
+    <!-- KPI -->
+    <div class="kpi-grid">
+      <div class="kpi-card red">
+        <div class="kpi-icon">🔴</div>
+        <div class="kpi-val red" id="k-crit">—</div>
+        <div class="kpi-lbl">Incidents Critiques</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-icon"><i class="bi bi-exclamation-circle" style="color:var(--amber)"></i></div>
+        <div class="kpi-val amber" id="k-ouv">—</div>
+        <div class="kpi-lbl">Incidents Ouverts</div>
+      </div>
+      <div class="kpi-card blue">
+        <div class="kpi-icon"><i class="bi bi-tools" style="color:var(--accent)"></i></div>
+        <div class="kpi-val blue" id="k-encours">—</div>
+        <div class="kpi-lbl">En cours maintenance</div>
+        <div class="kpi-sub" id="k-tickets-actifs"></div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-icon"><i class="bi bi-clock-history" style="color:var(--green)"></i></div>
+        <div class="kpi-val green" id="k-duree-moy">—</div>
+        <div class="kpi-lbl">Durée estimée moy.</div>
+        <div class="kpi-sub">par intervention</div>
+      </div>
+      <div class="kpi-card purple">
+        <div class="kpi-icon"><i class="bi bi-person-check" style="color:var(--purple)"></i></div>
+        <div class="kpi-val purple" id="k-dispo">—</div>
+        <div class="kpi-lbl">Techs Disponibles</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-icon"><i class="bi bi-speedometer" style="color:var(--green)"></i></div>
+        <div class="kpi-val green" id="k-mttr">—</div>
+        <div class="kpi-lbl">MTTR Réel</div>
+        <div class="kpi-sub">durée moy. résolution</div>
+      </div>
+      <div class="kpi-card blue">
+        <div class="kpi-icon"><i class="bi bi-check2-circle" style="color:var(--accent)"></i></div>
+        <div class="kpi-val blue" id="k-taux">—</div>
+        <div class="kpi-lbl">Taux Résolution</div>
+        <div class="kpi-sub">% incidents résolus</div>
+      </div>
+    </div>
+
+    <!-- Charts row 1 -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-title"><i class="bi bi-bar-chart-fill"></i> Incidents par heure <span id="pic-lbl" style="color:var(--red);font-size:10px;margin-left:4px"></span></div>
+        <canvas id="ch-heure"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="bi bi-pie-chart-fill"></i> Sévérité</div>
+        <canvas id="ch-sev"></canvas>
+      </div>
+     
+    </div>
+
+    <!-- Charts row 2 -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-title"><i class="bi bi-geo-alt-fill"></i> Incidents par secteur</div>
+        <canvas id="ch-secteur"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="bi bi-reception-4"></i> Par réseau</div>
+        <canvas id="ch-reseau"></canvas>
+      </div>
+    </div>
+    <!-- Évolution 7j + Escalade -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-title"><i class="bi bi-graph-up-arrow" style="color:var(--green)"></i> Évolution — 7 derniers jours</div>
+        <canvas id="ch-evolution" style="max-height:175px"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="bi bi-exclamation-octagon-fill" style="color:var(--red)"></i> 🚨 Escalade critiques non assignés <span id="esc-count" style="color:var(--red);margin-left:4px"></span></div>
+        <div id="esc-list" style="max-height:175px;overflow-y:auto"></div>
+      </div>
+    </div>
+    <!-- MTTR secteur + Perf techniciens -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-title"><i class="bi bi-bar-chart-steps" style="color:var(--amber)"></i> MTTR moyen par secteur (min)</div>
+        <canvas id="ch-mttr-secteur" style="max-height:175px"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="bi bi-trophy-fill" style="color:var(--purple)"></i> Performance techniciens top 8</div>
+        <canvas id="ch-perf-tech" style="max-height:175px"></canvas>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ PAGE: CARTE ══ -->
+<div class="page" id="page-carte">
+  <div class="map-layout">
+        <div class="map-wrap">
+      <div id="map"></div>
+      <div class="filter-bar-map">
+        <button class="fmap-btn active" onclick="setMapFilter('all',this)">Tout</button>
+        <button class="fmap-btn" onclick="setMapFilter('critique',this)">🔴 Critiques</button>
+        <button class="fmap-btn" onclick="setMapFilter('majeur',this)">🟠 Majeurs</button>
+        <button class="fmap-btn" onclick="setMapFilter('mineur',this)">🟡 Mineurs</button>
+        <button class="fmap-btn" onclick="setMapFilter('equipements',this)">⚙ Équipements</button>
+        <button class="fmap-btn" onclick="setMapFilter('techniciens',this)">👷 Techniciens</button>
+        <button class="fmap-btn" onclick="setMapFilter('incomplet',this)">⚠ Bloqués</button>
+      </div>
+    </div>
+
+    <div class="detail-panel" id="dp">
+      <div class="dp-head">
+        <div class="dp-head-title" id="dp-title">Sélection</div>
+        <div class="dp-close" onclick="closeDP()"><i class="bi bi-x-lg"></i></div>
+      </div>
+      <div class="dp-body" id="dp-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE: INCIDENTS ══ -->
+<div class="page" id="page-incidents">
+  <div class="scroll-body">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="font-family:var(--font-heading);font-size:13px;font-weight:700;color:var(--text);margin-right:8px">Incidents</span>
+      <button class="fmap-btn active" style="padding:5px 12px;border:1px solid var(--border2);border-radius:6px" onclick="fInc('all',this)">Tous (<span id="fi-all">—</span>)</button>
+      <button class="fmap-btn" style="padding:5px 12px;border:1px solid var(--border2);border-radius:6px" onclick="fInc('CRITIQUE',this)">🔴 Critiques</button>
+      <button class="fmap-btn" style="padding:5px 12px;border:1px solid var(--border2);border-radius:6px" onclick="fInc('MAJEUR',this)">🟠 Majeurs</button>
+      <button class="fmap-btn" style="padding:5px 12px;border:1px solid var(--border2);border-radius:6px" onclick="fInc('MINEUR',this)">🟡 Mineurs</button>
+      <button class="fmap-btn" style="padding:5px 12px;border:1px solid rgba(255,60,110,0.4);border-radius:6px" onclick="fInc('INCOMPLET',this)">⚠ Incomplets</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="tbl-scroll" style="max-height:calc(100vh - 180px)">
+        <table class="tbl">
+          <thead><tr><th>Code</th><th>Type</th><th>Sévérité</th><th>Statut</th><th>Secteur</th><th>Équipement</th><th></th></tr></thead>
+          <tbody id="inc-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE: TECHNICIENS ══ -->
+<div class="page" id="page-techniciens">
+  <div class="scroll-body">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-family:var(--font-heading);font-size:13px;font-weight:700;color:var(--text);margin-right:8px">Techniciens</span>
+      <button class="fmap-btn active" style="padding:5px 12px;border:1px solid var(--border2);border-radius:6px" onclick="fTech('all',this)">Tous</button>
+      <button class="fmap-btn" style="padding:5px 12px;border:1px solid var(--border2);border-radius:6px" onclick="fTech('DISPONIBLE',this)">Disponibles</button>
+      <button class="fmap-btn" style="padding:5px 12px;border:1px solid var(--border2);border-radius:6px" onclick="fTech('EN_INTERVENTION',this)">En intervention</button>
+      <button class="fmap-btn" style="padding:5px 12px;border:1px solid var(--border2);border-radius:6px" onclick="fTech('INDISPONIBLE',this)">Indisponibles</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="tbl-scroll" style="max-height:calc(100vh - 180px)">
+        <table class="tbl">
+          <thead><tr><th>Matricule</th><th>Nom</th><th>Statut</th><th>Exp.</th><th>Note</th><th>Compétences</th><th>Horaires</th><th>Raison indispo</th></tr></thead>
+          <tbody id="tech-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE: GANTT ══ -->
+<div class="page" id="page-gantt">
+  <div class="gantt-body">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-family:var(--font-heading);font-size:13px;font-weight:700;color:var(--text)">
+          <i class="bi bi-calendar3" style="color:var(--accent)"></i> Planning journalier
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button onclick="ganttPrevDay()" style="width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">&#8249;</button>
+          <input type="date" id="gantt-date"
+            style="background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;color:var(--text);font-family:var(--font-heading);font-size:12px;font-weight:600;cursor:pointer;"
+            onchange="renderGantt()">
+          <button onclick="ganttNextDay()" id="gantt-next-btn" style="width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">&#8250;</button>
+          <button onclick="exportGanttExcel()" title="Exporter en Excel" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;border:1px solid rgba(0,200,100,0.4);background:rgba(0,200,100,0.08);color:var(--green);font-family:var(--font-heading);font-size:11px;font-weight:600;cursor:pointer"><i class="bi bi-file-earmark-excel-fill"></i> Export</button>
+          <span id="gantt-day-label" style="font-size:11px;color:var(--accent);font-family:var(--font-heading);font-weight:600;letter-spacing:0.5px"></span>
+        </div>
+        <span id="gantt-ticket-count" style="font-size:11px;color:var(--text-dim)"></span>
+      </div>
+      <div class="gantt-legend">
+        <div class="gleg"><div class="gleg-dot" style="background:rgba(0,102,255,.7)"></div>En route</div>
+        <div class="gleg"><div class="gleg-dot" style="background:rgba(255,165,0,.7)"></div>Sur site</div>
+        <div class="gleg"><div class="gleg-dot" style="background:rgba(0,212,255,.7)"></div>En cours</div>
+        <div class="gleg"><div class="gleg-dot" style="background:rgba(0,200,100,.75)"></div>Complet</div>
+        <div class="gleg"><div class="gleg-dot" style="background:rgba(255,60,110,.65)"></div>Incomplet</div>
+        <div class="gleg"><div class="gleg-dot" style="background:rgba(107,114,128,.8)"></div>☕ Pause</div>
+        <div class="gleg"><div class="gleg-dot" style="background:rgba(130,80,255,.7)"></div>Planifié</div>
+      </div>
+    </div>
+
+    <div class="gantt-chart">
+      <div class="gantt-row" style="min-height:22px;background:var(--bg2)">
+        <div class="gantt-lbl" style="padding:4px 14px">
+          <span style="font-size:9px;color:var(--text-dim);font-family:var(--font-heading);letter-spacing:1px" id="gantt-pause-label">TECHNICIEN · 09h–18h</span>
+        </div>
+        <div class="gantt-track">
+          <div class="ghours" id="g-hours"></div>
+        </div>
+      </div>
+      <div id="g-rows"></div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /.main-wrap -->
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// CONFIG — API v3 PostgreSQL uniquement
+// ══════════════════════════════════════════════════════════════
+const API = 'http://localhost:5000';
+// Vérifier session au chargement
+window.addEventListener('load', () => {
+  const session = sessionStorage.getItem('nv_user');
+  if(!session) window.location.href = 'login.html';
+});
+
+function logout() {
+  sessionStorage.removeItem('nv_user');
+  window.location.href = 'login.html';
+}
+
+function confirmLogout() {
+  if(confirm('Voulez-vous vraiment vous déconnecter ?')) logout();
+}
+
+const SECTEURS = [
+  {id:1,nom:"Grand Casablanca",region:"Casablanca-Settat",lat:33.5731,lng:-7.5898},
+  {id:2,nom:"Rabat-Salé",region:"Rabat-Salé-Kénitra",lat:34.0209,lng:-6.8416},
+  {id:3,nom:"Marrakech",region:"Marrakech-Safi",lat:31.6295,lng:-7.9811},
+  {id:4,nom:"Fès",region:"Fès-Meknès",lat:34.0181,lng:-5.0078},
+  {id:5,nom:"Tanger",region:"Tanger-Tétouan-Al Hoceima",lat:35.7595,lng:-5.834},
+  {id:6,nom:"Agadir",region:"Souss-Massa",lat:30.4278,lng:-9.5981},
+  {id:7,nom:"Meknès",region:"Fès-Meknès",lat:33.8935,lng:-5.5547},
+  {id:8,nom:"Oujda",region:"Oriental",lat:34.6867,lng:-1.9114},
+  {id:9,nom:"Kenitra",region:"Rabat-Salé-Kénitra",lat:34.261,lng:-6.5802},
+  {id:10,nom:"Tétouan",region:"Tanger-Tétouan-Al Hoceima",lat:35.5785,lng:-5.3684},
+];
+
+// ── Appel API ──
+async function api(endpoint, opts={}) {
+  try {
+    const r = await fetch(API + endpoint, {
+      ...opts,
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) },
+      signal: AbortSignal.timeout(8000)
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || r.status);
+    return data;
+  } catch(e) {
+    console.error(endpoint, e.message);
+    return null;
+  }
+}
+
+// ── État global ──
+let MAP=null, LAYERS={}, CHARTS={};
+let mapReady=false, selTech=null, pendInc=null;
+let fi='all', ft='all';
+
+// ══════════════════════════════════════════════════════════════
+// HORLOGE
+// ══════════════════════════════════════════════════════════════
+function tick(){ document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR'); }
+setInterval(tick,1000); tick();
+
+// ══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════════
+function goPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.npill').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  btn.classList.add('active');
+  if(name==='carte' && !mapReady){ setTimeout(initMap, 80); mapReady=true; }
+  if(name==='dashboard')  renderDash();
+  if(name==='incidents')  renderInc();
+  if(name==='techniciens') renderTech();
+  if(name==='gantt') {
+    const di=document.getElementById('gantt-date');
+    if(!di.value) di.value=ganttToday();
+    renderGantt();
+    startGanttAutoRefresh();
+  } else {
+    stopGanttAutoRefresh();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// GANTT AUTO-REFRESH + NOTIFICATIONS
+// ══════════════════════════════════════════════════════════════
+let ganttRefreshInterval = null;
+let ganttPrevState = {};  // Snapshot des statuts pour détecter les changements
+
+function startGanttAutoRefresh() {
+  stopGanttAutoRefresh();
+  ganttRefreshInterval = setInterval(async () => {
+    // Fermer automatiquement les tickets en retard
+    const retards = await api('/api/tickets/fermer-retards', {method:'POST'});
+    if(retards && retards.count > 0) {
+      retards.fermes.forEach(tk => {
+        const color = 'var(--red)';
+        showGanttPopup({
+          technicien: tk.technicien,
+          ticket:     tk.code_ticket,
+          avant:      'EN_COURS',
+          apres:      'INCOMPLET',
+          telephone:  tk.telephone,
+          auto:       true,
+        }, '#ff3c6e');
+        refreshKPI();
+      toast('⏱ Clôture automatique',
+          `${tk.code_ticket} — ${tk.technicien} n'a pas terminé dans le délai estimé`,
+          'error');
+      });
+    }
+
+    const newData = await api('/api/gantt');
+    if(!newData) return;
+
+    // Détecter les changements de statut terrain
+    const changes = [];
+    (newData.techniciens || []).forEach(t => {
+      (t.tickets || []).forEach(tk => {
+        const key = `${tk.ticket_id}`;
+        const prevStatut = ganttPrevState[key];
+        const newStatut  = tk.statut_terrain;
+        if(prevStatut !== undefined && prevStatut !== newStatut) {
+          changes.push({
+            technicien: t.nom,
+            ticket:     tk.code_ticket,
+            avant:      prevStatut || 'EN ATTENTE',
+            apres:      newStatut  || '—',
+            telephone:  t.telephone,
+            pauseMin:   tk.duree_pause_min || 0,
+          });
+        }
+        ganttPrevState[key] = newStatut;
+      });
+    });
+
+    // Rafraîchir le Gantt complet (barres + liste techniciens)
+    const techniciens = newData.techniciens || [];
+    const dateValAuto = document.getElementById('gantt-date')?.value || ganttToday();
+    if(dateValAuto !== ganttToday()) return; // Ne pas écraser l'historique
+    const withTkNew = techniciens.filter(t => t.tickets && t.tickets.length > 0);
+    if(withTkNew.length > 0) {
+      renderGanttRows(withTkNew, dateValAuto);
+    }
+
+    // Afficher popup pour chaque changement détecté
+    changes.forEach(ch => {
+      const stColor = {
+        EN_ROUTE:'#4477ff', SUR_SITE:'#ffa500', EN_COURS:'#00d4ff',
+        COMPLETE:'#00c864', INCOMPLET:'#ff3c6e'
+      }[ch.apres] || '#888';
+      showGanttPopup(ch, stColor);
+    });
+
+  }, 10000); // toutes les 10 secondes
+}
+
+function stopGanttAutoRefresh() {
+  if(ganttRefreshInterval) {
+    clearInterval(ganttRefreshInterval);
+    ganttRefreshInterval = null;
+  }
+}
+
+function showGanttPopup(ch, color) {
+  const stIcon = {EN_ROUTE:'🚗',SUR_SITE:'📍',EN_COURS:'🔧',COMPLETE:'✅',INCOMPLET:'⚠️',EN_PAUSE:'☕'}[ch.apres]||'📋';
+  const stLabel = {EN_ROUTE:'En route',SUR_SITE:'Sur site',EN_COURS:'En cours',COMPLETE:'Terminé',INCOMPLET:'Incomplet',EN_PAUSE:'En pause'}[ch.apres]||ch.apres;
+
+  const existingPopups = document.querySelectorAll('.gantt-popup').length;
+  const popup = document.createElement('div');
+  popup.style.cssText = `
+    position:fixed; bottom:${20 + existingPopups * 95}px;
+    right:18px; z-index:9998; min-width:290px; max-width:350px;
+    background:var(--surface); border:1px solid ${color}55;
+    border-left:4px solid ${color}; border-radius:11px;
+    padding:13px 16px; box-shadow:0 6px 28px rgba(0,0,0,.7);
+    animation:tin .3s ease; display:flex; gap:10px; align-items:flex-start;
+    backdrop-filter:blur(10px);
+  `;
+  popup.className = 'gantt-popup';
+  popup.innerHTML = `
+    <div style="font-size:18px">${stIcon}</div>
+    <div style="flex:1">
+      <div style="font-family:var(--font-heading);font-size:12px;font-weight:700;color:${color};margin-bottom:3px">
+        ${ch.auto ? '⚠ Clôture automatique' : 'Mise à jour terrain'}
+      </div>
+      <div style="font-size:11px;color:var(--text);margin-bottom:2px">
+        <strong>${ch.technicien}</strong> → <span style="color:${color}">${stLabel}</span>
+      </div>
+      <div style="font-size:10px;color:var(--text-dim)">${ch.ticket}</div>
+      ${ch.telephone ? `
+      <a href="tel:${ch.telephone}" style="display:inline-flex;align-items:center;gap:4px;
+        margin-top:6px;padding:3px 9px;border-radius:5px;
+        border:1px solid var(--green);background:rgba(0,200,100,.08);
+        color:var(--green);font-family:var(--font-heading);font-size:9px;
+        font-weight:600;text-decoration:none">
+        <i class="bi bi-telephone-fill"></i> ${ch.telephone}
+      </a>` : ''}
+    </div>
+    <div onclick="this.parentElement.remove()" style="cursor:pointer;color:var(--text-dim);font-size:14px;flex-shrink:0"
+      onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-dim)'">✕</div>
+  `;
+  document.body.appendChild(popup);
+  // Auto-fermeture après 8 secondes
+  setTimeout(() => { popup.style.transition='opacity .5s'; popup.style.opacity='0'; setTimeout(()=>popup.remove(),500); }, 8000);
+}
+
+// Initialiser le snapshot au premier chargement du Gantt
+async function initGanttSnapshot() {
+  const data = await api('/api/gantt');
+  if(!data) return;
+  (data.techniciens || []).forEach(t => {
+    (t.tickets || []).forEach(tk => {
+      ganttPrevState[`${tk.ticket_id}`] = tk.statut_terrain;
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// DASHBOARD — 100% API
+// ══════════════════════════════════════════════════════════════
+async function renderDash() {
+  // KPI depuis PostgreSQL
+  const kpi = await api('/api/kpi');
+  if(!kpi) { toast('Erreur','Impossible de charger les KPI','error'); return; }
+
+  document.getElementById('k-crit').textContent = kpi.incidents_critiques ?? '—';
+  document.getElementById('k-ouv').textContent  = kpi.incidents_ouverts   ?? '—';
+  document.getElementById('k-encours').textContent = kpi.en_maintenance_active ?? '—';
+  document.getElementById('k-tickets-actifs').textContent = (kpi.tickets_actifs||0)+' tickets actifs';
+  const _dm = kpi.duree_estimee_moy_min;
+  document.getElementById('k-duree-moy').textContent = _dm
+    ? (Math.floor(_dm/60)>0 ? Math.floor(_dm/60)+'h'+(Math.round(_dm%60)>0?String(Math.round(_dm%60)).padStart(2,'0'):'') : Math.round(_dm)+'min')
+    : '—';
+  document.getElementById('k-dispo').textContent= kpi.disponibles ?? '—';
+  document.getElementById('nb-crit').textContent= kpi.incidents_critiques ?? '—';
+  document.getElementById('api-status').textContent = '● PostgreSQL';
+  document.getElementById('api-status').style.color = 'var(--green)';
+  const _fmtM = m => !m?'—':Math.floor(m/60)>0?Math.floor(m/60)+'h'+(Math.round(m%60)>0?String(Math.round(m%60)).padStart(2,'0'):''):Math.round(m)+'min';
+  const _mtEl = document.getElementById('k-mttr');
+  if(_mtEl) _mtEl.textContent = _fmtM(kpi.mttr_moyen_min);
+  const _txEl = document.getElementById('k-taux');
+  if(_txEl) _txEl.textContent = kpi.taux_resolution_pct != null ? kpi.taux_resolution_pct+'%' : '—';
+  await buildCharts();
+}
+
+// ══════════════════════════════════════════════════════════════
+// GRAPHES — 100% API
+// ══════════════════════════════════════════════════════════════
+async function buildCharts() {
+  // Incidents par heure
+  const rh = await api('/api/incidents/par-heure');
+  if(rh) {
+    const h = Array(24).fill(0);
+    rh.forEach(r=>{ h[r.heure]=r.nb_incidents; });
+    const peak = h.indexOf(Math.max(...h));
+    document.getElementById('pic-lbl').textContent = `— pic ${peak}h`;
+    mkBar('ch-heure', Array.from({length:24},(_,i)=>i+'h'), h,
+      h.map((_,i)=>i===peak?'rgba(255,60,110,0.7)':'rgba(0,212,255,0.35)'));
+  }
+
+  // Sévérité
+  const kpi = await api('/api/kpi');
+  if(kpi) {
+    mkDonut('ch-sev',['Critique','Majeur','Mineur'],
+      [kpi.incidents_critiques||0, kpi.incidents_majeurs||0, kpi.incidents_mineurs||0],
+      ['rgba(255,60,110,0.7)','rgba(255,165,0,0.7)','rgba(255,204,0,0.6)']);
+  }
+
+  // Par réseau
+  const rr = await api('/api/incidents/par-reseau');
+  if(rr) {
+    const rk = rr.map(r=>r.type_reseau);
+    mkBar('ch-reseau', rk, rr.map(r=>r.nb_incidents), 'rgba(0,212,255,0.45)', true);
+  }
+
+  // Par secteur
+  const rs = await api('/api/incidents/par-secteur');
+  if(rs) {
+    const sc2 = ['rgba(0,212,255,.45)','rgba(255,60,110,.45)','rgba(0,200,100,.45)',
+      'rgba(255,204,0,.45)','rgba(130,80,255,.45)','rgba(255,136,0,.45)',
+      'rgba(59,130,246,.45)','rgba(236,72,153,.45)','rgba(16,185,129,.45)','rgba(239,68,68,.45)'];
+    mkBar('ch-secteur', rs.map(r=>r.secteur), rs.map(r=>r.nb_incidents), sc2, true);
+  }
+  // Évolution 7 jours
+  const rev = await api('/api/incidents/evolution');
+  if(rev && rev.length) {
+    const fmtJ = s=>{const m=String(s||'').match(/(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+'/'+m[2]:'—';};
+    if(CHARTS['ch-evolution']) CHARTS['ch-evolution'].destroy();
+    const ctxEv=document.getElementById('ch-evolution');
+    if(ctxEv) CHARTS['ch-evolution']=new Chart(ctxEv.getContext('2d'),{
+      type:'line',
+      data:{labels:rev.map(r=>fmtJ(r.jour)),datasets:[
+        {label:'Total',data:rev.map(r=>r.total),borderColor:'rgba(0,212,255,.9)',backgroundColor:'rgba(0,212,255,.07)',tension:.4,fill:true,pointRadius:4},
+        {label:'Résolus',data:rev.map(r=>r.resolus),borderColor:'rgba(0,200,100,.9)',backgroundColor:'rgba(0,200,100,.07)',tension:.4,fill:true,pointRadius:4},
+        {label:'Critiques',data:rev.map(r=>r.critiques),borderColor:'rgba(255,60,110,.9)',backgroundColor:'transparent',tension:.4,fill:false,pointRadius:4},
+      ]},
+      options:{...C_OPTS,plugins:{...C_OPTS.plugins,legend:{display:true,labels:{color:'rgba(200,212,232,.6)',font:{size:9},boxWidth:12,padding:10}}}}
+    });
+  }
+  // MTTR par secteur
+  const rmt = await api('/api/incidents/par-secteur');
+  if(rmt){
+    const withMttr=rmt.map(r=>({...r,mttr_val:r.mttr_moyen>0?r.mttr_moyen:(r.mttr_resolution>0?r.mttr_resolution:null)})).filter(r=>r.mttr_val>0);
+    if(withMttr.length){
+      const mttrColors=withMttr.map(r=>r.mttr_val>120?'rgba(255,60,110,.65)':r.mttr_val>60?'rgba(255,165,0,.65)':'rgba(0,200,100,.65)');
+      mkBar('ch-mttr-secteur',withMttr.map(r=>r.secteur.split(' ')[0]),withMttr.map(r=>Math.round(r.mttr_val)),mttrColors,true);
+    } else {
+      const wE=rmt.filter(r=>(r.duree_estimee_moy||0)>0);
+      if(wE.length) mkBar('ch-mttr-secteur',wE.map(r=>r.secteur.split(' ')[0]),wE.map(r=>Math.round(r.duree_estimee_moy||0)),'rgba(130,80,255,.5)',true);
+    }
+  }
+  // Performance techniciens
+  const rpt = await api('/api/performance/techniciens');
+  if(rpt && rpt.length){
+    const top8=rpt.slice(0,8);
+    if(CHARTS['ch-perf-tech']) CHARTS['ch-perf-tech'].destroy();
+    const ctxP=document.getElementById('ch-perf-tech');
+    if(ctxP) CHARTS['ch-perf-tech']=new Chart(ctxP.getContext('2d'),{
+      type:'bar',
+      data:{labels:top8.map(t=>t.nom.split(' ')[0]),datasets:[
+        {label:'Complétés',data:top8.map(t=>t.tickets_completes||0),backgroundColor:'rgba(0,200,100,.6)',borderRadius:3},
+        {label:'Incomplets',data:top8.map(t=>t.tickets_incomplets||0),backgroundColor:'rgba(255,60,110,.5)',borderRadius:3},
+      ]},
+      options:{...C_OPTS,plugins:{...C_OPTS.plugins,legend:{display:true,labels:{color:'rgba(200,212,232,.6)',font:{size:9},boxWidth:10,padding:8}}}}
+    });
+  }
+  await buildEscalade();
+}
+
+async function checkPauses() {
+  // Vérifier si des techniciens sont EN_PAUSE et notifier
+  const data = await api('/api/gantt');
+  if(!data || !data.techniciens) return;
+  data.techniciens.forEach(t => {
+    (t.tickets||[]).forEach(tk => {
+      if(tk.statut_terrain === 'EN_PAUSE') {
+        const key = `pause_notif_${tk.ticket_id}`;
+        if(!sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, '1');
+          toast(`☕ ${t.prenom} ${t.nom} — En pause`,
+            `${tk.code_ticket} · La pause sera déduite de la durée estimée`, 'info');
+        }
+      } else {
+        sessionStorage.removeItem(`pause_notif_${tk.ticket_id}`);
+      }
+    });
+  });
+}
+
+async function buildEscalade() {
+  const esc = await api('/api/incidents/escalade');
+  const list = document.getElementById('esc-list');
+  const cnt  = document.getElementById('esc-count');
+  if(!list) return;
+  if(!esc || !esc.length) {
+    if(cnt) cnt.textContent='';
+    list.innerHTML='<div style="color:var(--green);font-size:12px;padding:12px 0;text-align:center">✅ Aucun incident critique en attente de plus de 30 min</div>';
+    return;
+  }
+  if(cnt) cnt.textContent=`(${esc.length})`;
+  const fmtW=m=>m>=60?Math.floor(m/60)+'h'+String(Math.round(m%60)).padStart(2,'0'):Math.round(m)+'min';
+  list.innerHTML=esc.map(e=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:5px;border-radius:7px;
+      background:rgba(255,60,110,0.07);
+      border:1px solid rgba(255,60,110,0.2)">
+      <div style="min-width:0">
+        <div style="font-family:var(--font-heading);font-size:11px;font-weight:600;color:var(--red);display:flex;align-items:center;gap:5px">
+          ${e.code_incident}
+        </div>
+        <div style="font-size:10px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ${(e.type_incident||'').replace(/_/g,' ')} · ${e.secteur_nom||'—'}
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;margin-left:8px">
+        <div style="font-size:10px;color:var(--red);font-weight:700">⏱ ${fmtW(e.minutes_attente)}</div>
+        <button onclick="goToIncidentMap(${e.id})"
+          style="margin-top:3px;padding:2px 8px;border-radius:5px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-family:var(--font-heading);font-size:9px;font-weight:600;cursor:pointer"
+          onmouseover="this.style.background='rgba(0,212,255,.12)'" onmouseout="this.style.background='transparent'">⚡ Dispatcher</button>
+      </div>
+    </div>`).join('');
+}
+
+const C_OPTS = {
+  responsive:true, maintainAspectRatio:true,
+  plugins:{
+    legend:{display:false},
+    tooltip:{backgroundColor:'rgba(13,27,46,.95)',titleColor:'#00d4ff',bodyColor:'#c8dde8',
+      borderColor:'rgba(0,212,255,.2)',borderWidth:1,
+      titleFont:{family:'Syne'},bodyFont:{family:'DM Sans'}}
+  },
+  scales:{
+    x:{ticks:{color:'rgba(200,212,232,.4)',font:{size:8,family:'Syne'}},grid:{color:'rgba(0,212,255,.05)'},border:{color:'transparent'}},
+    y:{ticks:{color:'rgba(200,212,232,.4)',font:{size:8}},grid:{color:'rgba(0,212,255,.05)'},border:{color:'transparent'}}
+  }
+};
+
+function mkBar(id,labels,data,bgColor,horizontal=false){
+  if(CHARTS[id]) CHARTS[id].destroy();
+  const ctx=document.getElementById(id).getContext('2d');
+  CHARTS[id]=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[{data,backgroundColor:Array.isArray(bgColor)?bgColor:bgColor,borderWidth:0,borderRadius:3}]},
+    options:{...C_OPTS,indexAxis:horizontal?'y':'x'}
+  });
+}
+function mkDonut(id,labels,data,colors){
+  if(CHARTS[id]) CHARTS[id].destroy();
+  const ctx=document.getElementById(id).getContext('2d');
+  CHARTS[id]=new Chart(ctx,{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'#060d1a',borderWidth:2}]},
+    options:{
+      responsive:true,maintainAspectRatio:true,cutout:'68%',
+      plugins:{
+        legend:{position:'bottom',labels:{color:'rgba(200,212,232,.5)',font:{size:9,family:'Syne'},padding:8,boxWidth:10}},
+        tooltip:{backgroundColor:'rgba(13,27,46,.95)',titleColor:'#00d4ff',bodyColor:'#c8dde8',borderColor:'rgba(0,212,255,.2)',borderWidth:1}
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// CARTE LEAFLET — incidents OUVERT uniquement (v3)
+// ══════════════════════════════════════════════════════════════
+async function initMap() {
+  MAP = L.map('map',{center:[32.5,-6.5],zoom:6});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    attribution:'© OSM © CARTO', subdomains:'abcd', maxZoom:19
+  }).addTo(MAP);
+  await buildMapLayers();
+}
+
+function icoInc(sev, statut){
+  // INCOMPLET : icône spéciale orange foncé avec croix
+  if(statut === 'INCOMPLET') {
+    return L.divIcon({html:`<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
+      <circle cx="14" cy="14" r="9" fill="#cc7000" opacity=".9" stroke="#060d1a" stroke-width="2"/>
+      <text x="14" y="19" text-anchor="middle" font-size="12" fill="#fff" font-family="Arial" font-weight="bold">!</text>
+      <circle cx="14" cy="14" r="11" fill="none" stroke="#ff9500" stroke-width="1" opacity=".5">
+        <animate attributeName="r" from="11" to="18" dur="2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" from=".5" to="0" dur="2s" repeatCount="indefinite"/>
+      </circle>
+    </svg>`,iconSize:[28,28],iconAnchor:[14,14],className:''});
+  }
+  // Couleur toujours basée sur la sévérité (même EN_COURS garde sa couleur critique/majeur)
+  const c = {CRITIQUE:'#ff3c6e', MAJEUR:'#ffa500', MINEUR:'#ffcc00'}[sev] || '#00d4ff';
+  const pulse = sev==='CRITIQUE'
+    ? `<circle cx="14" cy="14" r="11" fill="none" stroke="${c}" stroke-width="1" opacity=".2"><animate attributeName="r" from="11" to="20" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" from=".3" to="0" dur="1.5s" repeatCount="indefinite"/></circle>`
+    : '';
+  // EN_COURS : anneau tournant + point central (garde la couleur de sévérité)
+  const inner = statut==='EN_COURS'
+    ? `${pulse}<circle cx="14" cy="14" r="9" fill="${c}" opacity=".15" stroke="${c}" stroke-width="2" stroke-dasharray="4 3"><animateTransform attributeName="transform" type="rotate" from="0 14 14" to="360 14 14" dur="3s" repeatCount="indefinite"/></circle>
+       <circle cx="14" cy="14" r="5" fill="${c}" opacity=".9"/>`
+    : `${pulse}<circle cx="14" cy="14" r="9" fill="${c}" opacity=".85" stroke="#060d1a" stroke-width="2"/>`;
+  return L.divIcon({html:`<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">${inner}</svg>`,iconSize:[28,28],iconAnchor:[14,14],className:''});
+}
+function icoTech(st){
+  const c={DISPONIBLE:'#00c864',EN_INTERVENTION:'#ffa500',EN_PAUSE:'#ff9500',INDISPONIBLE:'#444'}[st]||'#888';
+  return L.divIcon({html:`<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="8" fill="#0d1b2e" stroke="${c}" stroke-width="2.5"/><text x="11" y="15" text-anchor="middle" font-size="8" fill="${c}" font-family="Arial" font-weight="bold">T</text></svg>`,iconSize:[22,22],iconAnchor:[11,11],className:''});
+}
+function icoEq(st){
+  const cfg={
+    ACTIF:       {c:'#2255ff',bg:'rgba(34,85,255,0.2)',  lbl:'⚙'},
+    MAINTENANCE: {c:'#ffa500',bg:'rgba(255,165,0,0.2)',  lbl:'🔧'},
+    HORS_SERVICE:{c:'#ff3c6e',bg:'rgba(255,60,110,0.2)', lbl:'⚠'},
+  }[st]||{c:'#555',bg:'rgba(80,80,80,0.15)',lbl:'⚙'};
+  return L.divIcon({
+    html:`<div style="width:24px;height:24px;background:${cfg.bg};border:1.5px solid ${cfg.c};
+      border-radius:5px;display:flex;align-items:center;justify-content:center;
+      font-size:12px;box-shadow:0 0 8px ${cfg.c}66;cursor:pointer">${cfg.lbl}</div>`,
+    iconSize:[24,24],iconAnchor:[12,12],className:''
+  });
+}
+
+async function buildMapLayers() {
+  Object.values(LAYERS).forEach(lg=>{if(MAP.hasLayer(lg))MAP.removeLayer(lg);});
+  LAYERS={};
+
+  // Données depuis /api/carte (incidents OUVERT seulement — v3)
+  const carte = await api('/api/carte');
+  if(!carte) { toast('Erreur carte','API carte indisponible','error'); return; }
+
+  // Secteurs
+  const sc=['#00d4ff','#00c864','#ffa500','#ff3c6e','#8250ff','#f59e0b','#10b981','#ef4444','#3b82f6','#ec4899'];
+  const sg = L.layerGroup().addTo(MAP); LAYERS['secteurs']=sg;
+  SECTEURS.forEach((s,i)=>{
+    L.circle([s.lat,s.lng],{radius:22000,color:sc[i],weight:1,opacity:.3,fillOpacity:.03,dashArray:'4 8'})
+     .bindTooltip(`<b>${s.nom}</b><br><small>${s.region}</small>`,{direction:'center'}).addTo(sg);
+    L.marker([s.lat,s.lng],{icon:L.divIcon({html:`<div style="font-family:Syne,sans-serif;font-size:8px;color:${sc[i]};white-space:nowrap;text-shadow:0 0 5px rgba(0,0,0,.9);opacity:.75;font-weight:700;letter-spacing:1px">${s.nom.toUpperCase()}</div>`,className:'',iconAnchor:[38,0]}),interactive:false}).addTo(sg);
+  });
+
+  // Équipements
+  const eqG={ACTIF:L.layerGroup(),MAINTENANCE:L.layerGroup(),HORS_SERVICE:L.layerGroup()};
+  (carte.equipements||[]).forEach(eq=>{
+    if(!eq.latitude && !eq.lat) return;
+    const lat=eq.latitude||eq.lat, lng=eq.longitude||eq.lng;
+    const m=L.marker([lat,lng],{icon:icoEq(eq.statut)});
+    m.on('click', ()=>showEqDP(eq));
+    eqG[eq.statut]?.addLayer(m);
+  });
+  LAYERS['eq-actif']=eqG.ACTIF.addTo(MAP);
+  LAYERS['eq-maintenance']=eqG.MAINTENANCE.addTo(MAP);
+  LAYERS['eq-hs']=eqG.HORS_SERVICE;
+
+  // Incidents OUVERT + EN_COURS sur la carte
+  const incG={CRITIQUE:L.layerGroup(),MAJEUR:L.layerGroup(),MINEUR:L.layerGroup()};
+  (carte.incidents||[]).forEach(inc=>{
+    if(!inc.latitude && !inc.lat) return;
+    const lat=inc.latitude||inc.lat, lng=inc.longitude||inc.lng;
+    const m=L.marker([lat,lng],{icon:icoInc(inc.severite,inc.statut)});
+    m.on('click',()=>showIncDP({...inc,lat,lng}));
+    // Toujours dans le layer SEVERITE — peu importe le statut
+    incG[inc.severite]?.addLayer(m);
+  });
+  // Incidents INCOMPLET — layer séparé (orange)
+  const incIncomplet = L.layerGroup();
+  (carte.incidents||[]).filter(inc=>inc.statut==='INCOMPLET').forEach(inc=>{
+    if(!inc.latitude && !inc.lat) return;
+    const lat=inc.latitude||inc.lat, lng=inc.longitude||inc.lng;
+    const m=L.marker([lat,lng],{icon:icoInc(inc.severite,'INCOMPLET')});
+    m.on('click',()=>showIncIncompletDP({...inc,lat,lng}));
+    incIncomplet.addLayer(m);
+  });
+  LAYERS['inc-critique']=incG.CRITIQUE.addTo(MAP);
+  LAYERS['inc-majeur']=incG.MAJEUR.addTo(MAP);
+  LAYERS['inc-mineur']=incG.MINEUR.addTo(MAP);
+  LAYERS['inc-incomplet']=incIncomplet.addTo(MAP);
+
+  // Techniciens — toutes couleurs selon statut
+  const techG={DISPONIBLE:L.layerGroup(),EN_INTERVENTION:L.layerGroup(),EN_PAUSE:L.layerGroup(),INDISPONIBLE:L.layerGroup()};
+  (carte.techniciens||[]).forEach(t=>{
+    if(!t.latitude && !t.lat) return;
+    const lat=t.latitude||t.lat, lng=t.longitude||t.lng;
+    const m=L.marker([lat,lng],{icon:icoTech(t.statut)});
+    m.on('click',()=>showTechDP({...t,lat,lng}));
+    // pas de tooltip — panel au clic
+    // statut déjà calculé côté API — EN_INTERVENTION si ticket actif
+    const realSt = t.statut || 'DISPONIBLE';
+    techG[realSt]?.addLayer(m);
+  });
+  LAYERS['tech-dispo']=techG.DISPONIBLE.addTo(MAP);
+  LAYERS['tech-inter']=techG.EN_INTERVENTION.addTo(MAP);
+  LAYERS['tech-pause']=techG.EN_PAUSE.addTo(MAP);
+  LAYERS['tech-indis']=techG.INDISPONIBLE.addTo(MAP);
+}
+
+function setMapFilter(f,btn){
+  document.querySelectorAll('.fmap-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const vis={
+    all:{'inc-critique':1,'inc-majeur':1,'inc-mineur':1,'inc-incomplet':1,'tech-dispo':1,'tech-inter':1,'tech-pause':1,'eq-actif':1,'eq-maintenance':1,'eq-hs':1,'secteurs':1},
+    critique:{'inc-critique':1,'secteurs':1},
+    majeur:{'inc-majeur':1,'secteurs':1},
+    mineur:{'inc-mineur':1,'secteurs':1},
+    incomplet:{'inc-incomplet':1,'secteurs':1},
+    equipements:{'eq-actif':1,'eq-maintenance':1,'eq-hs':1,'secteurs':1},
+    techniciens:{'tech-dispo':1,'tech-inter':1,'tech-pause':1,'tech-indis':1,'secteurs':1},
+  }[f]||{};
+  Object.keys(LAYERS).forEach(k=>{
+    const lg=LAYERS[k];
+    if(vis[k]){if(!MAP.hasLayer(lg))MAP.addLayer(lg);}
+    else{if(MAP.hasLayer(lg))MAP.removeLayer(lg);}
+  });
+}
+
+function setMapTab(t,btn){
+  document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('ml-inc').style.display  = t==='inc'  ? 'block':'none';
+  document.getElementById('ml-tech').style.display = t==='tech' ? 'block':'none';
+  document.getElementById('ml-eq').style.display   = t==='eq'   ? 'block':'none';
+}
+
+// ── Cache incidents pour éviter les problèmes d'échappement dans onclick ──
+const INC_CACHE = {};
+
+async function buildMapSidebar(){ /* sidebar supprimée */ }
+
+function clickIncSidebar(id) {
+  const inc = INC_CACHE[id];
+  if(!inc) return;
+  const lat = inc.latitude || inc.lat;
+  const lng = inc.longitude || inc.lng;
+  if(!lat || !lng) { toast('Attention','Incident sans coordonnées GPS','info'); return; }
+  if(MAP) MAP.flyTo([lat, lng], 16, {duration:1.2});
+  showIncDP({...inc, lat, lng}, true);
+}
+
+function clickEqSidebar(id) {
+  const eq = (window._EQ_CACHE||{})[id];
+  if(!eq) return;
+  const lat = eq.latitude;
+  const lng = eq.longitude;
+  if(!lat || !lng) { toast('Attention','Équipement sans coordonnées GPS','info'); return; }
+  if(MAP) MAP.flyTo([lat, lng], 17, {duration:1.2});
+  showEqDP(eq);
+}
+
+// ── Détail incident + dispatch ──
+async function showIncDP(inc, skipFlyTo=false) {
+  const lat = inc.lat || inc.latitude;
+  const lng = inc.lng || inc.longitude;
+  if(!skipFlyTo && MAP && lat) MAP.flyTo([lat, lng], 16, {duration:1});
+  pendInc=inc; selTech=null;
+  document.getElementById('dp').classList.add('open');
+  document.getElementById('dp-title').textContent=`Incident · ${inc.severite}`;
+  document.getElementById('dp-body').innerHTML=`<div style="color:var(--text-dim);font-size:12px;padding:20px 0;text-align:center"><i class="bi bi-hourglass-split"></i> Chargement...</div>`;
+
+  // Dispatch : techniciens disponibles triés par distance
+  const d = await api(`/api/dispatch/${inc.id}`);
+  const dispos     = d ? [...(d.meme_secteur||[]), ...(d.autres_secteurs||[])].slice(0,4) : [];
+  const planifiables = d ? (d.planifiables||[]).slice(0,3) : [];
+  const nearby = [
+    ...dispos.map(t=>({...t,lat:t.latitude,lng:t.longitude,dist:t.distance_km,
+      secteur_nom:t.secteur_nom||t.secteur,
+      competences:t.competences?t.competences.split(', '):[],
+      meme:t.meme_secteur, mode:'DISPO'})),
+    ...planifiables.map(t=>({...t,lat:t.latitude,lng:t.longitude,dist:t.distance_km,
+      secteur_nom:t.secteur_nom||t.secteur,
+      competences:t.competences?t.competences.split(', '):[],
+      meme:t.meme_secteur, mode:'PLANIFIE'})),
+  ];
+
+  const code  = inc.code_incident||'—';
+  const type  = (inc.type_incident||'').replace(/_/g,' ');
+  const sect  = inc.secteur_nom_complet||inc.secteur_nom||'—';
+  const duree = inc.duree_estimee_min ? `~${inc.duree_estimee_min} min estimées` : '';
+  // Équipement associé à l'incident
+  const eqType  = inc.equipement_type || inc.eq_type || inc.modele || '';
+  const eqNom   = inc.eq_nom || inc.nom_equipement || '';
+  const eqLine  = eqType||eqNom
+    ? `<div class="dp-field"><div class="dp-label">Équipement</div>
+        <div class="dp-val" style="display:flex;align-items:center;gap:6px">
+          <i class="bi bi-router-fill" style="color:var(--accent)"></i>
+          ${eqNom||eqType}${eqNom&&eqType?` <span style="color:var(--text-dim);font-size:10px">(${eqType})</span>`:''}
+        </div></div>`
+    : '';
+
+  let h=`
+    <div class="dp-field"><div class="dp-label">Code</div><div class="dp-val mono">${code}</div></div>
+    <div class="dp-field"><div class="dp-label">Type panne</div><div class="dp-val">${type}</div></div>
+    ${eqLine}
+    <div class="dp-field"><div class="dp-label">Sévérité · Statut</div>
+      <div class="dp-val" style="display:flex;gap:6px;margin-top:2px">
+        <span class="badge ${inc.severite}" style="background:${{CRITIQUE:'rgba(255,60,110,.18)',MAJEUR:'rgba(255,165,0,.15)',MINEUR:'rgba(255,204,0,.12)'}[inc.severite]||''};color:${{CRITIQUE:'var(--red)',MAJEUR:'var(--amber)',MINEUR:'#ffcc00'}[inc.severite]||'var(--text)'}">${inc.severite}</span>
+        <span class="badge ${inc.statut}">${inc.statut}</span>
+      </div>
+    </div>
+    <div class="dp-field"><div class="dp-label">Secteur</div><div class="dp-val">${sect}</div></div>
+    ${duree?`<div class="dp-field"><div class="dp-label">Durée estimée</div><div class="dp-val" style="color:var(--amber)">${duree}</div></div>`:''}
+    <hr class="dp-sep">
+    <div class="dp-label" style="margin-bottom:8px">⚡ Dispatch — Techniciens disponibles</div>`;
+
+  if(nearby.length===0) {
+    h+=`<div style="font-size:12px;color:var(--text-dim);padding:8px 0">
+      <i class="bi bi-exclamation-triangle" style="color:var(--amber)"></i>
+      Aucun technicien disponible actuellement</div>`;
+  } else {
+    // Séparateur sections
+    const nbDispo = nearby.filter(t=>t.mode==='DISPO').length;
+    if(nbDispo>0) h+=`<div style="font-size:9px;font-weight:600;letter-spacing:1px;color:var(--green);margin-bottom:6px;font-family:var(--font-heading)">● Disponibles maintenant</div>`;
+
+    nearby.forEach((t,i)=>{
+      const comp = t.competences ? (Array.isArray(t.competences)?t.competences:t.competences.split(', ')).slice(0,2).join(' · ') : '—';
+      const isPlanifie = t.mode==='PLANIFIE';
+      const dispoDans = t.disponible_dans_min>0 ? `${t.disponible_dans_min}min` : '';
+      if(i===nbDispo && isPlanifie){
+        h+=`<div style="font-size:9px;font-weight:600;letter-spacing:1px;color:var(--amber);margin:10px 0 6px;font-family:var(--font-heading)">⏱ Planifiables — après ticket actuel</div>`;
+      }
+      h+=`<div class="tdc ${i===0&&!isPlanifie?'top':''}" id="tdc-${t.id}"
+        onclick="selDispTech('${t.id}',${JSON.stringify(t).replace(/"/g,'&quot;')})"
+        style="${isPlanifie?'border-style:dashed;opacity:0.85':''}">
+        <div class="tdc-name" style="display:flex;align-items:center;gap:6px">
+          <span>${t.prenom} ${t.nom}</span>
+          <small style="color:var(--text-dim)">${t.matricule}</small>
+          ${isPlanifie?`<span style="font-size:8px;padding:1px 5px;background:rgba(255,165,0,.12);color:var(--amber);border-radius:3px;border:1px solid rgba(255,165,0,.25)">⏱ PLANIFIÉ</span>`:''}
+        </div>
+        <div class="tdc-meta">
+          <span class="tdc-dist">📍 ${t.dist||'?'} km</span>
+          <span>⭐ ${t.note_perf}</span>
+          ${t.meme?'<span style="color:var(--green)">✓ même secteur</span>':''}
+          ${dispoDans?`<span style="color:var(--amber)">dispo dans ${dispoDans}</span>`:''}
+        </div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:2px">${comp}</div>
+      </div>`;
+    });
+  }
+
+  h+=`<button class="btn-assign-full" onclick="doAssign()">
+    <i class="bi bi-lightning-charge-fill"></i> Créer & Assigner Ticket
+  </button>`;
+  document.getElementById('dp-body').innerHTML=h;
+}
+
+function showEqDP(eq) {
+  if(MAP) MAP.flyTo([eq.latitude||eq.lat, eq.longitude||eq.lng], 14, {duration:1});
+  document.getElementById('dp').classList.add('open');
+  document.getElementById('dp-title').textContent = 'Équipement';
+  const stColor = {ACTIF:'var(--green)', MAINTENANCE:'var(--amber)', HORS_SERVICE:'var(--red)'}[eq.statut]||'var(--text-dim)';
+  document.getElementById('dp-body').innerHTML = `
+    <div class="dp-field"><div class="dp-label">Code</div><div class="dp-val mono">${eq.code}</div></div>
+    <div class="dp-field"><div class="dp-label">Nom</div><div class="dp-val">${eq.nom||'—'}</div></div>
+    <div class="dp-field"><div class="dp-label">Type</div><div class="dp-val">${eq.type}</div></div>
+    <div class="dp-field"><div class="dp-label">Modèle</div><div class="dp-val">${eq.modele||'—'}</div></div>
+    <div class="dp-field"><div class="dp-label">Statut</div>
+      <div class="dp-val" style="color:${stColor};font-weight:600">● ${eq.statut}</div>
+    </div>
+    <div class="dp-field"><div class="dp-label">Coordonnées</div>
+      <div class="dp-val mono" style="font-size:10px">${(eq.latitude||eq.lat||0).toFixed(4)}°N · ${(eq.longitude||eq.lng||0).toFixed(4)}°E</div>
+    </div>`;
+}
+
+async function showTechDP(t) {
+  if(MAP && t.lat) MAP.flyTo([t.lat,t.lng],13,{duration:1});
+  document.getElementById('dp').classList.add('open');
+  document.getElementById('dp-title').textContent='Technicien';
+
+  // Détail complet depuis API
+  const detail = await api(`/api/techniciens/${t.id}`);
+  const tech = detail || t;
+  const stats = tech.stats || {};
+  const comp = tech.competences
+    ? (typeof tech.competences==='string' ? tech.competences : tech.competences.join(', '))
+    : '—';
+
+  let h=`
+    <div class="dp-field"><div class="dp-label">Matricule</div><div class="dp-val mono">${tech.matricule}</div></div>
+    <div class="dp-field"><div class="dp-label">Nom</div><div class="dp-val">${tech.prenom} ${tech.nom}</div></div>
+    <div class="dp-field"><div class="dp-label">Statut</div>
+      <div class="dp-val">
+        <span class="badge ${tech.statut==='DISPONIBLE'?'DISPO':tech.statut==='EN_INTERVENTION'?'INTER':'INDISPO'}"
+          style="font-size:11px">${tech.statut.replace('_',' ')}</span>
+      </div>
+    </div>
+    <div class="dp-field"><div class="dp-label">Secteur</div><div class="dp-val">${tech.secteur_nom||'—'}</div></div>
+    <div class="dp-field"><div class="dp-label">Performance</div><div class="dp-val">⭐ ${tech.note_perf}/5 · ${tech.annees_exp} ans</div></div>
+    <div class="dp-field"><div class="dp-label">Horaires</div><div class="dp-val" style="font-size:12px">${tech.heure_debut||'09:00'}–${tech.heure_fin||'18:00'}</div></div>
+    <div class="dp-field"><div class="dp-label">Compétences</div><div class="dp-val" style="font-size:11px">${comp}</div></div>
+    ${tech.raison_indisponibilite?`<div class="dp-field"><div class="dp-label">Raison indispo</div><div class="dp-val" style="color:var(--amber);font-size:12px">${tech.raison_indisponibilite}</div></div>`:''}
+    ${stats.total_tickets?`
+    <hr class="dp-sep">
+    <div class="dp-label" style="margin-bottom:6px">Statistiques</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px">
+      <div style="background:var(--bg2);border-radius:6px;padding:7px 10px"><div style="color:var(--text-dim)">Total tickets</div><div style="font-weight:600">${stats.total_tickets||0}</div></div>
+      <div style="background:var(--bg2);border-radius:6px;padding:7px 10px"><div style="color:var(--text-dim)">Complétés</div><div style="font-weight:600;color:var(--green)">${stats.tickets_completes||0}</div></div>
+      <div style="background:var(--bg2);border-radius:6px;padding:7px 10px"><div style="color:var(--text-dim)">Note moy.</div><div style="font-weight:600;color:var(--amber)">⭐${stats.note_moyenne||'—'}</div></div>
+      <div style="background:var(--bg2);border-radius:6px;padding:7px 10px"><div style="color:var(--text-dim)">Durée moy.</div><div style="font-weight:600">${stats.duree_moy_min||'—'} min</div></div>
+    </div>`:''}`;
+  document.getElementById('dp-body').innerHTML=h;
+}
+
+function selDispTech(id,t){
+  document.querySelectorAll('.tdc').forEach(c=>c.classList.remove('selected'));
+  const el=document.getElementById(`tdc-${id}`);
+  if(el) el.classList.add('selected');
+  selTech=t;
+}
+
+// ── Panel incident INCOMPLET sur carte ──
+async function showIncIncompletDP(inc, skipFlyTo=false) {
+  const lat = inc.lat || inc.latitude;
+  const lng = inc.lng || inc.longitude;
+  if(!skipFlyTo && MAP && lat) MAP.flyTo([lat, lng], 16, {duration:1});
+  document.getElementById('dp').classList.add('open');
+  document.getElementById('dp-title').textContent = `Incident Bloqué · ${inc.severite}`;
+
+  const code  = inc.code_incident||'—';
+  const type  = (inc.type_incident||'').replace(/_/g,' ');
+  const sect  = inc.secteur_nom_complet||inc.secteur_nom||'—';
+  const cause = inc.cause_incomplete || inc.cause || '—';
+
+  document.getElementById('dp-body').innerHTML = `
+    <div style="background:rgba(255,149,0,0.08);border:1px solid rgba(255,149,0,0.3);
+      border-radius:10px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-family:var(--font-heading);font-size:11px;font-weight:700;
+        color:#ff9500;margin-bottom:4px">⚠ Incident bloqué — intervention incomplète</div>
+    
+    </div>
+    <div class="dp-field"><div class="dp-label">Code</div><div class="dp-val mono">${code}</div></div>
+    <div class="dp-field"><div class="dp-label">Type panne</div><div class="dp-val">${type}</div></div>
+    <div class="dp-field"><div class="dp-label">Sévérité</div>
+      <div class="dp-val"><span class="badge ${inc.severite}">${inc.severite}</span></div>
+    </div>
+    <div class="dp-field"><div class="dp-label">Secteur</div><div class="dp-val">${sect}</div></div>
+    <div class="dp-field"><div class="dp-label">Cause bloquante</div>
+      <div class="dp-val" style="color:var(--red);font-size:12px;padding:8px;
+        background:rgba(255,60,110,0.06);border-radius:6px;border-left:2px solid var(--red)">
+        ${cause}
+      </div>
+    </div>
+    <hr class="dp-sep">
+    <button onclick="showDebloquerPopup(${inc.id},'${code}','${cause.replace(/'/g,"\'").slice(0,80)}')"
+      style="width:100%;padding:11px;border-radius:9px;
+      border:1px solid rgba(0,200,100,0.4);background:rgba(0,200,100,0.08);
+      color:var(--green);font-family:var(--font-heading);font-size:11px;
+      font-weight:700;cursor:pointer;display:flex;align-items:center;
+      justify-content:center;gap:7px;margin-bottom:8px"
+      onmouseover="this.style.background='rgba(0,200,100,0.18)'"
+      onmouseout="this.style.background='rgba(0,200,100,0.08)'">
+      <i class="bi bi-unlock-fill"></i> Cause résolue — Redispatcher
+    </button>
+    <button onclick="closeDP()"
+      style="width:100%;padding:9px;border-radius:9px;
+      border:1px solid var(--border2);background:transparent;
+      color:var(--text-dim);font-family:var(--font-heading);font-size:11px;
+      font-weight:500;cursor:pointer">
+      Laisser bloqué
+    </button>`;
+}
+
+// ── Popup confirmation déblocage ──
+async function showDebloquerPopup(incId, code, cause) {
+  // Charger la vraie cause depuis le dernier ticket
+  const detail = await api(`/api/incidents/${incId}`);
+  const vraieCause = detail?.ticket?.cause_incomplete || cause || '—';
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)';
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border:1px solid rgba(0,200,100,0.3);
+      border-radius:14px;padding:28px;max-width:420px;width:100%;
+      animation:tin .25s ease;box-shadow:0 8px 32px rgba(0,0,0,.7)">
+      <div onclick="this.closest('[style*=fixed]').remove()"
+        style="float:right;cursor:pointer;color:var(--text-dim);font-size:18px"
+        onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-dim)'">✕</div>
+      <div style="font-size:28px;text-align:center;margin-bottom:12px">🔓</div>
+      <div style="font-family:var(--font-heading);font-size:15px;font-weight:700;
+        color:var(--text);text-align:center;margin-bottom:6px">
+        Résolution de la cause bloquante
+      </div>
+      <div style="font-family:monospace;font-size:12px;color:var(--accent);
+        text-align:center;margin-bottom:16px">${code}</div>
+
+      <div style="background:rgba(255,60,110,0.06);border:1px solid rgba(255,60,110,0.2);
+        border-radius:8px;padding:10px 14px;margin-bottom:18px">
+        <div style="font-family:var(--font-heading);font-size:9px;font-weight:600;
+          text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:4px">
+          Cause signalée par le technicien
+        </div>
+          <div style="font-size:12px;color:var(--text)">${vraieCause}</div>
+      </div>
+
+      <div style="font-family:var(--font-heading);font-size:12px;font-weight:600;
+        color:var(--text);margin-bottom:12px;text-align:center">
+        La cause bloquante est-elle résolue ?
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button onclick="this.closest('[style*=fixed]').remove()"
+          style="padding:12px;border-radius:9px;border:1px solid rgba(255,60,110,0.3);
+          background:rgba(255,60,110,0.06);color:var(--red);
+          font-family:var(--font-heading);font-size:12px;font-weight:600;cursor:pointer"
+          onmouseover="this.style.background='rgba(255,60,110,0.12)'"
+          onmouseout="this.style.background='rgba(255,60,110,0.06)'">
+          <i class="bi bi-x-circle"></i> Non — Reste bloqué
+        </button>
+        <button onclick="confirmerDeblocage(${incId}); this.closest('[style*=fixed]').remove();"
+          style="padding:12px;border-radius:9px;border:1px solid rgba(0,200,100,0.4);
+          background:rgba(0,200,100,0.1);color:var(--green);
+          font-family:var(--font-heading);font-size:12px;font-weight:700;cursor:pointer"
+          onmouseover="this.style.background='rgba(0,200,100,0.2)'"
+          onmouseout="this.style.background='rgba(0,200,100,0.1)'">
+          <i class="bi bi-check-circle-fill"></i> Oui — Redispatcher
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+}
+
+async function confirmerDeblocage(incId) {
+  const res = await api(`/api/incidents/${incId}/debloquer`, {method:'POST'});
+  if(res && res.success) {
+    toast('✅ Incident débloqué',
+      `${res.code_incident} remis OUVERT — sélectionner un technicien`,
+      'success');
+    closeDP();
+    // Ouvrir directement le panel dispatch
+    setTimeout(async () => {
+      const inc = await api(`/api/incidents/${incId}`);
+      if(!inc) return;
+      const lat = inc.latitude || inc.lat;
+      const lng = inc.longitude || inc.lng;
+      if(MAP && lat && lng) MAP.flyTo([lat, lng], 16, {duration:1});
+      showIncDP({...inc, lat, lng}, true);
+      await buildMapLayers();
+      await refreshKPI();
+      await buildEscalade();
+    }, 400);
+  } else {
+    toast('Erreur', res?.error||'Erreur API', 'error');
+  }
+}
+
+function closeDP(){ document.getElementById('dp').classList.remove('open'); }
+
+// ── DISPATCH — appelle POST /api/dispatch/assigner → persistant en DB ──
+async function doAssign() {
+  const inc = pendInc;
+  if(!inc){ toast('Erreur','Sélectionner un incident d\'abord','error'); return; }
+  if(!selTech){ toast('Sélection requise','Choisir un technicien dans la liste','info'); return; }
+
+  const res = await api('/api/dispatch/assigner', {
+    method:'POST',
+    body: JSON.stringify({incident_id: inc.id, technicien_id: selTech.id})
+  });
+
+  // J+1 : popup de confirmation avant insertion
+  if(res && res.confirmation_requise) {
+    showJ1ConfirmPopup(res, inc, selTech);
+    return;
+  }
+
+  if(res && res.success){
+    if(res.planifie){
+      toast('📅 Ticket planifié',
+        `${res.code_ticket} → ${res.technicien}\nDébut estimé: ${res.debut_planifie?(()=>{const s=String(res.debut_planifie||'');const m=s.match(/T(\d{2}):(\d{2})/);return m?m[1]+':'+m[2]:'—';})():'—'}\n${inc.code_incident} · ${inc.severite}`,
+        'info');
+    } else {
+      const reprise = res.reprise_demain
+      ? (()=>{const s=String(res.date_assignation||'');const m=s.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);return m?`\n⏰ Reprise demain ${m[3]}/${m[2]} à ${m[4]}:${m[5]}`:''})()
+      : '';
+      toast('✅ Ticket créé & assigné',
+        `${res.code_ticket} → ${res.technicien}\n` +
+        `📍 ${res.distance_km||'?'} km · 🔧 Fin estimée : ${res.fin_estimee_heure||'—'}`,
+        'success');
+      setTimeout(()=>toast('📡 Notification',`${selTech.prenom} ${selTech.nom} — en route`,'info'),1400);
+    }
+    // Rafraîchir Gantt immédiatement après dispatch
+    setTimeout(async () => {
+      await renderGantt();
+      await initGanttSnapshot();
+    }, 500);
+    selTech=null; pendInc=null; closeDP();
+    // Recharger la carte et les KPI immédiatement
+    setTimeout(async()=>{
+      await buildMapLayers();
+      // Refresh KPI direct sans refaire tous les graphes
+      const kpi = await api('/api/kpi');
+      if(kpi){
+        document.getElementById('k-ouv').textContent      = kpi.incidents_ouverts       ?? '—';
+        document.getElementById('k-crit').textContent     = kpi.incidents_critiques     ?? '—';
+        document.getElementById('k-encours').textContent  = kpi.en_maintenance_active   ?? '—';
+        document.getElementById('k-tickets-actifs').textContent = (kpi.tickets_actifs||0)+' tickets actifs';
+        document.getElementById('k-dispo').textContent    = kpi.disponibles             ?? '—';
+        document.getElementById('nb-crit').textContent    = kpi.incidents_critiques     ?? '—';
+      }
+    }, 800);
+  } else {
+    toast('Erreur dispatch', res?.error||'Erreur API','error');
+  }
+}
+
+function redispatchTicket(incId) {
+  if(!incId) { toast('Erreur','Incident non trouvé','error'); return; }
+  toast('🔄 Redispatch','Ouverture du panel de dispatch...','info');
+  dispatchInc(incId);
+}
+
+function dispatchInc(id){
+  const carteBtn = document.querySelectorAll('.npill')[1];
+  goPage('carte', carteBtn);
+  setTimeout(async()=>{
+    const inc = await api(`/api/incidents/${id}`);
+    if(!inc){ toast('Erreur','Incident introuvable','error'); return; }
+    const lat = inc.latitude || inc.lat;
+    const lng = inc.longitude || inc.lng;
+    if(!MAP){ await initMap(); await new Promise(r=>setTimeout(r,500)); }
+    if(MAP && lat && lng) MAP.setView([lat, lng], 17);
+    showIncDP({...inc, lat, lng}, true);
+  }, mapReady ? 100 : 800);
+}
+
+// ══════════════════════════════════════════════════════════════
+// PAGE INCIDENTS — OUVERT par défaut
+// ══════════════════════════════════════════════════════════════
+function fInc(f,btn){
+  fi=f;
+  document.querySelectorAll('#page-incidents .fmap-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderInc();
+}
+
+async function renderInc(){
+  let endpoint = '/api/incidents?statut=OUVERT&limit=200';
+  if(fi==='CRITIQUE'||fi==='MAJEUR'||fi==='MINEUR') endpoint += `&severite=${fi}`;
+  else if(fi==='INCOMPLET') endpoint = '/api/incidents?statut=INCOMPLET&limit=200';
+  // fi==='all' → tous statuts par défaut
+
+  const data = await api(endpoint);
+  const incs = (data&&data.data) ? data.data : [];
+  document.getElementById('fi-all').textContent = data?.total||'—';
+
+  // Cache séparé pour ne pas écraser INC_CACHE du sidebar carte
+  window._INC_TABLE_CACHE = {};
+  incs.forEach(i => { window._INC_TABLE_CACHE[i.id] = i; });
+
+  document.getElementById('inc-tbody').innerHTML = incs.map(i=>`
+    <tr>
+      <td class="mono">${i.code_incident||'—'}</td>
+      <td>${(i.type_incident||'').replace(/_/g,' ')}</td>
+      <td><span class="badge ${i.severite}">${i.severite}</span></td>
+      <td><span class="badge ${i.statut}" style="font-size:9px">${i.statut}</span></td>
+      <td>${i.secteur_nom_complet||i.secteur_nom||'—'}</td>
+      <td class="mono" style="font-size:10px">${i.equipement_type||'—'}</td>
+      <td style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
+        <button onclick="goToIncidentMap(${i.id})"
+          style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;
+          border-radius:5px;border:1px solid rgba(0,212,255,0.35);
+          background:rgba(0,212,255,0.06);color:var(--accent);
+          font-family:var(--font-heading);font-size:9px;font-weight:600;
+          cursor:pointer;white-space:nowrap"
+          onmouseover="this.style.background='rgba(0,212,255,0.15)'"
+          onmouseout="this.style.background='rgba(0,212,255,0.06)'">
+          <i class="bi bi-map-fill"></i> Carte
+        </button>
+        ${i.statut==='INCOMPLET'?`
+        <button onclick="showDebloquerPopup(${i.id},'${(i.code_incident||'').replace(/'/g,"\\'")}','${(i.cause_incomplete||'').replace(/'/g,"\\'").slice(0,60)}')"
+          style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;
+          border-radius:5px;border:1px solid rgba(255,60,110,0.4);
+          background:rgba(255,60,110,0.06);color:var(--red);
+          font-family:var(--font-heading);font-size:9px;font-weight:600;
+          cursor:pointer;white-space:nowrap"
+          onmouseover="this.style.background='rgba(255,60,110,0.15)'"
+          onmouseout="this.style.background='rgba(255,60,110,0.06)'">
+          <i class="bi bi-unlock-fill"></i> Débloquer
+        </button>`:''}
+      </td>
+    </tr>`).join('');
+}
+
+// Marqueur highlight temporaire pour identifier l'incident sélectionné
+let _highlightMarker = null;
+
+function goToIncidentMap(id) {
+  const carteBtn = document.querySelector('.npill[onclick*="carte"]');
+  if(carteBtn) carteBtn.click();
+
+  setTimeout(async () => {
+    const detail = await api(`/api/incidents/${id}`);
+    if(!detail) { toast('Erreur','Incident introuvable','error'); return; }
+    const lat = detail.latitude || detail.lat;
+    const lng = detail.longitude || detail.lng;
+    if(!lat || !lng) { toast('Attention','Incident sans coordonnées GPS','info'); return; }
+
+    if(!MAP){ await initMap(); await new Promise(r=>setTimeout(r,400)); }
+
+    // Filtrer la carte sur la severite de cet incident — seuls ses pairs sont visibles
+    const _sevF = {CRITIQUE:'critique', MAJEUR:'majeur', MINEUR:'mineur'}[detail.severite];
+    if(_sevF) {
+      const _fBtn = document.querySelector('.fmap-btn[onclick*="' + _sevF + '"]');
+      if(_fBtn) setMapFilter(_sevF, _fBtn);
+    }
+    // Zoom sur l'incident exact
+    MAP.setView([lat, lng], 17);
+    // Panel avec données exactes de l'API
+    showIncDP({...detail, lat, lng}, true);
+  }, mapReady ? 150 : 900);
+}
+
+// ══════════════════════════════════════════════════════════════
+// PAGE TECHNICIENS — depuis API
+// ══════════════════════════════════════════════════════════════
+function fTech(f,btn){
+  ft=f;
+  document.querySelectorAll('#page-techniciens .fmap-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTech();
+}
+
+async function renderTech(){
+  let endpoint = '/api/techniciens?limit=50';
+  if(ft!=='all') endpoint += `&statut=${ft}`;
+  const data = await api(endpoint);
+  const techs = (data&&data.data) ? data.data : [];
+
+  document.getElementById('tech-tbody').innerHTML = techs.map(t=>{
+    // Statut réel : EN_INTERVENTION si ticket actif existe (même si DB dit DISPONIBLE)
+    const realStatut = t.statut || 'DISPONIBLE';
+    const stCls   = realStatut==='DISPONIBLE'?'DISPO':realStatut==='EN_PAUSE'?'EN_PAUSE':realStatut==='EN_INTERVENTION'?'INTER':'INDISPO';
+    const stColor = realStatut==='DISPONIBLE'?'var(--green)':realStatut==='EN_PAUSE'?'#ff9500':realStatut==='EN_INTERVENTION'?'var(--amber)':'var(--text-dim)';
+    const stLabel = realStatut==='EN_PAUSE' ? '☕ En pause'
+      : realStatut==='EN_INTERVENTION' && t.ticket_actif_statut
+        ? t.ticket_actif_statut.replace(/_/g,' ')
+        : realStatut.replace(/_/g,' ');
+    return `<tr>
+      <td class="mono">${t.matricule}</td>
+      <td style="font-weight:500">${t.prenom} ${t.nom}</td>
+    
+      <td>
+        <span class="badge ${stCls}" style="color:${stColor}">${stLabel}</span>
+        ${t.ticket_actif_code ? `<div style="font-family:monospace;font-size:9px;color:rgba(0,212,255,.55);margin-top:2px">${t.ticket_actif_code}</div>` : ''}
+      </td>
+      <td style="color:var(--text-dim)">${t.annees_exp} ans</td>
+      <td style="color:#ffcc00">⭐ ${t.note_perf}</td>
+      <td style="font-size:10px;color:var(--text-dim)">${t.competences||'—'}</td>
+      <td style="font-size:10px;color:var(--text-dim)">${t.heure_debut||'09:00'}–${t.heure_fin||'18:00'}</td>
+      <td style="font-size:10px;color:var(--amber)">${t.raison_indisponibilite||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// GANTT — AUJOURD'HUI · depuis /api/gantt · 100% persistant
+// ══════════════════════════════════════════════════════════════
+function ganttToday(){ return new Date().toISOString().slice(0,10); }
+
+function ganttPrevDay(){
+  const d=new Date(document.getElementById('gantt-date').value+'T00:00:00');
+  d.setDate(d.getDate()-1);
+  document.getElementById('gantt-date').value=d.toISOString().slice(0,10);
+  stopGanttAutoRefresh();
+  renderGantt();
+}
+function ganttNextDay(){
+  const d=new Date(document.getElementById('gantt-date').value+'T00:00:00');
+  const todayD=new Date(); todayD.setHours(0,0,0,0);
+  if(d>=todayD) return;
+  d.setDate(d.getDate()+1);
+  const newVal=d.toISOString().slice(0,10);
+  document.getElementById('gantt-date').value=newVal;
+  renderGantt();
+  if(newVal===ganttToday()) startGanttAutoRefresh();
+  else stopGanttAutoRefresh();
+}
+async function renderGantt(){
+  const dateInput=document.getElementById('gantt-date');
+  if(!dateInput.value) dateInput.value=ganttToday();
+  const dateStr=dateInput.value;
+  const today=ganttToday();
+
+  // Label
+  const dateObj=new Date(dateStr+'T00:00:00');
+  const days=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const label = dateStr===today ? '— Aujourd\'hui' :
+    dateStr===new Date(Date.now()-86400000).toISOString().slice(0,10) ? '— Hier' :
+    '— '+days[dateObj.getDay()]+' '+dateObj.toLocaleDateString('fr-FR',{day:'numeric',month:'long'});
+  document.getElementById('gantt-day-label').textContent=label;
+
+  // Bloquer futur
+  const nb=document.getElementById('gantt-next-btn');
+  nb.style.opacity=dateStr>=today?'0.3':'1';
+  nb.style.pointerEvents=dateStr>=today?'none':'auto';
+
+  // Heures
+  document.getElementById('g-hours').innerHTML=
+    Array.from({length:10},(_,i)=>`<div class="ghcell">${9+i}h</div>`).join('');
+
+  document.getElementById('g-rows').innerHTML=
+    `<div style="text-align:center;padding:20px;color:var(--text-dim);font-size:12px"><i class="bi bi-hourglass-split"></i> Chargement...</div>`;
+
+  // Appel API — filtré sur la date (backend filtre CURRENT_DATE en v3)
+  // Pour historique : passe la date comme paramètre
+  const ganttData = await api(`/api/gantt?date=${dateStr}`);
+  
+
+  if(!ganttData) {
+    document.getElementById('g-rows').innerHTML=
+      `<div style="text-align:center;padding:20px;color:var(--text-dim);font-size:12px">Aucune donnée pour cette date</div>`;
+    return;
+  }
+
+  const techniciens = ganttData.techniciens||[];
+  // Seulement techniciens EN_INTERVENTION (avec tickets actifs)
+  const isToday = dateStr === today;
+  const withTk = techniciens.filter(t => {
+    if(!t.tickets || t.tickets.length === 0) return false;
+    if(isToday) {
+      // Garder tous les tickets du jour — actifs ET terminés
+      return true;
+    }
+    return t.tickets.some(tk => ['COMPLETE','INCOMPLET'].includes(tk.statut_terrain));
+  });
+
+  document.getElementById('gantt-ticket-count').textContent =
+    `${withTk.reduce((a,t)=>a+t.tickets.length,0)} tickets · ${withTk.length} techniciens actifs`;
+
+  if(withTk.length===0){
+    document.getElementById('g-rows').innerHTML=
+      `<div style="text-align:center;padding:30px;color:var(--text-dim);font-size:12px">
+        <i class="bi bi-calendar-x" style="font-size:24px;display:block;margin-bottom:8px;color:var(--border2)"></i>
+        Aucun technicien en intervention aujourd'hui
+      </div>`;
+    return;
+  }
+
+  renderGanttRows(withTk, dateStr);
+}
+
+function renderGanttRows(techRows, dateStr){
+  const DAY_S=9*60, DAY_E=18*60, DUR=DAY_E-DAY_S;
+  const pct=min=>Math.max(0,Math.min(100,(min-DAY_S)/DUR*100));
+  const today=ganttToday();
+
+
+
+  // Tooltip global
+  let tooltip=document.getElementById('g-tooltip-el');
+  if(!tooltip){
+    tooltip=document.createElement('div');
+    tooltip.id='g-tooltip-el';
+    tooltip.className='g-tooltip';
+    document.body.appendChild(tooltip);
+  }
+
+  const ST_LABEL = {
+    EN_ROUTE:'🚗 En route', SUR_SITE:'📍 Sur site',
+    EN_COURS:'🔧 En cours', COMPLETE:'✅ Complété',
+    INCOMPLET:'⚠ Incomplet', PAUSE:'☕ Pause', ASSIGNE:'📋 Assigné'
+  };
+  const ST_COLOR = {
+    EN_ROUTE:'#4488ff', SUR_SITE:'#ffb700', EN_COURS:'#00d4ff',
+    COMPLETE:'#00c864', INCOMPLET:'#ff3c6e', PAUSE:'#888', ASSIGNE:'#8250ff'
+  };
+
+  function showTip(e, tk){
+    const fmt=dt=>{if(!dt)return'—';const s=String(dt);const m=s.match(/T(\d{2}):(\d{2})/);if(m)return m[1]+':'+m[2];const m2=s.match(/(\d{2}):(\d{2}):\d/);if(m2)return m2[1]+':'+m2[2];return'—';};
+    const fmtDurTip = m => m ? (Math.floor(m/60)>0 ? Math.floor(m/60)+'h'+(m%60>0?String(Math.round(m%60)).padStart(2,'0'):'') : Math.round(m)+'min') : '—';
+    const dur = tk.duree_min ? fmtDurTip(tk.duree_min) : (tk.duree_estimee_min ? '~'+fmtDurTip(tk.duree_estimee_min) : '—');
+    const c=ST_COLOR[tk.statut_terrain]||'#888';
+    tooltip.innerHTML=`
+      <div class="g-tooltip-title">${tk.code_ticket||'—'}</div>
+      <div style="margin-bottom:6px">
+        <span style="display:inline-block;padding:1px 8px;border-radius:4px;background:${c}22;color:${c};border:1px solid ${c}44;font-size:10px;font-weight:700">
+          ${ST_LABEL[tk.statut_terrain]||tk.statut_terrain}
+        </span>
+      </div>
+      <div class="g-tooltip-row"><span class="g-tooltip-key">Incident</span><span class="g-tooltip-val">${tk.incident_code||'—'}</span></div>
+      <div class="g-tooltip-row"><span class="g-tooltip-key">Type</span><span class="g-tooltip-val">${(tk.type_incident||'').replace(/_/g,' ')}</span></div>
+      <div class="g-tooltip-row"><span class="g-tooltip-key">Sévérité</span><span class="g-tooltip-val">${tk.severite||'—'}</span></div>
+      <div class="g-tooltip-row"><span class="g-tooltip-key">Assignation</span><span class="g-tooltip-val">${fmt(tk.date_assignation)}</span></div>
+      <div class="g-tooltip-row"><span class="g-tooltip-key">Arrivée</span><span class="g-tooltip-val">${fmt(tk.date_arrivee_site)}</span></div>
+      <div class="g-tooltip-row"><span class="g-tooltip-key">Début</span><span class="g-tooltip-val">${fmt(tk.date_debut_intervention)}</span></div>
+      <div class="g-tooltip-row"><span class="g-tooltip-key">Fin</span><span class="g-tooltip-val">${(()=>{const isAuto=(tk.cause_incomplete||"").includes("automatique")||(tk.updated_by||"")==="SYSTEME";return isAuto?"—":fmt(tk.date_fin_intervention);})()}</span></div>
+      <div class="g-tooltip-row"><span class="g-tooltip-key">Durée réelle</span><span class="g-tooltip-val" style="color:var(--green)">${(()=>{
+        const isAuto=(tk.cause_incomplete||'').includes('automatique')||(tk.updated_by||'')==='SYSTEME';
+        if(isAuto) return '—';
+        if(tk.duree_min) return fmtDurTip(tk.duree_min);
+        if(['COMPLETE','INCOMPLET'].includes(tk.statut_terrain)&&tk.date_fin_intervention){
+          const m=Math.round((new Date(tk.date_fin_intervention)-new Date(tk.date_assignation))/60000);
+          if(m>0) return fmtDurTip(m);
+        }
+        return '—';
+      })()}</span></div>
+      <div class="g-tooltip-row"><span class="g-tooltip-key">Durée estimée</span><span class="g-tooltip-val" style="color:var(--amber)">~${fmtDurTip(tk.duree_estimee_min||durMin)}</span></div>
+      ${(tk.duree_pause_min||0)>0?`
+      <div class="g-tooltip-row"><span class="g-tooltip-key">☕ Pause cumulée</span><span class="g-tooltip-val" style="color:#ff9500">+${fmtDurTip(tk.duree_pause_min)}</span></div>
+      <div class="g-tooltip-row" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:4px"><span class="g-tooltip-key" style="color:var(--text);font-weight:700">Durée totale</span><span class="g-tooltip-val" style="color:var(--amber);font-weight:700">${fmtDurTip((tk.duree_estimee_min||0)+(tk.duree_pause_min||0))}</span></div>
+      `:''}
+      ${(tk.duree_pause_min||0)>0?`
+      <div class="g-tooltip-row"><span class="g-tooltip-key">☕ Pause prise</span><span class="g-tooltip-val" style="color:#ff9500">+${fmtDurTip(tk.duree_pause_min)} → fin repoussée</span></div>
+      <div class="g-tooltip-row"><span class="g-tooltip-key">Durée totale</span><span class="g-tooltip-val" style="color:var(--amber);font-weight:700">~${fmtDurTip((tk.duree_estimee_min||durMin)+(tk.duree_pause_min||0))}</span></div>`:''}
+      ${tk.cause_incomplete?`<div style="margin-top:6px;padding:4px 8px;background:rgba(255,60,110,.1);border-left:2px solid #ff3c6e;border-radius:0 4px 4px 0;font-size:10px;color:#ff3c6e">⚠ ${tk.cause_incomplete}</div>`:''}
+      ${tk._depasseJournee?'<div style="margin-top:5px;padding:3px 7px;background:rgba(255,165,0,0.1);border-radius:4px;font-size:9px;color:var(--amber)">⏰ Dépasse 17h → Reprise demain 8h</div>':''}
+      <div style="margin-top:7px;font-size:9px;color:var(--text-dim)">Clic pour historique complet</div>`;
+    tooltip.classList.add('show');
+    moveTip(e);
+  }
+  function moveTip(e){
+    const x=e.clientX+14, y=e.clientY-10;
+    tooltip.style.left=(x+220>window.innerWidth?x-234:x)+'px';
+    tooltip.style.top=(y+200>window.innerHeight?y-210:y)+'px';
+  }
+  function hideTip(){ tooltip.classList.remove('show'); }
+
+
+  document.getElementById('g-rows').innerHTML = techRows.map(t=>{
+
+    // Téléphone depuis les données technicien (chargées via /api/carte)
+    // On le récupère depuis le cache si disponible
+    const techPhone = t.telephone || '';
+    // Injecter le tel dans chaque ticket pour l'alerte retard
+    t.tickets.forEach(tk => { tk.telephone = techPhone; });
+
+    // Statut technicien
+    const stColor={DISPONIBLE:'var(--green)',EN_INTERVENTION:'var(--amber)',INDISPONIBLE:'var(--text-dim)'}[t.statut]||'var(--text-dim)';
+    const stDot=`<span style="width:7px;height:7px;border-radius:50%;background:${stColor};box-shadow:0 0 5px ${stColor};display:inline-block;margin-right:5px;flex-shrink:0"></span>`;
+    const stLabel=t.statut==='EN_INTERVENTION'?'INTER':t.statut==='INDISPONIBLE'?'INDISPO':'DISPO';
+    const stBadge=`<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:${stColor}18;color:${stColor};border:1px solid ${stColor}33;letter-spacing:0.5px">${stLabel}</span>`;
+
+    // Barres tickets — avec gestion pause déjeuner
+    const bars = t.tickets.map(tk=>{
+      if(!tk.date_assignation) return '';
+
+      // Heure de début = toujours date_assignation (vision tout inclus : trajet + intervention)
+      const startDt = tk.date_assignation;
+      if(!startDt) return '';
+      const start = new Date(startDt);
+      let rawStartMin = start.getHours()*60 + start.getMinutes();
+      // Avant 9h ou après 18h → forcer à 9h (ticket assigné hors heures de travail)
+      let startMin = (rawStartMin < DAY_S || rawStartMin >= DAY_E)
+        ? DAY_S   // Placer à 9h00 pour rester visible
+        : rawStartMin;
+
+      // Durée logique par TYPE de panne (seed stable par ticket_id)
+      const _seed = ((tk.ticket_id || 1) * 2654435761) >>> 0;
+      const _rand = ((_seed ^ (_seed >>> 16)) % 1000) / 1000; // 0.0 → 1.0 stable
+
+      // Plages réalistes par type d'incident (min/max en minutes)
+      // Durées réalistes plafonnées à 4h max
+      const _durByType = {
+        PANNE_COMPLETE:  {min:180, max:240}, // 3h-4h
+        COUPURE_FIBRE:   {min:150, max:180}, // 2h30-3h
+        PANNE_ALIM:      {min:120, max:180}, // 2h-3h
+        DEGRADATION:     {min:60,  max:120}, // 1h-2h
+        SURCHARGE:       {min:45,  max:90},  // 45min-1h30
+        INTERFERENCE:    {min:30,  max:60},  // 30min-1h
+        ALARME_RESEAU:   {min:30,  max:60},  // 30min-1h
+        MISE_A_JOUR:     {min:45,  max:90},  // 45min-1h30
+      };
+      const _range = _durByType[tk.type_incident] || {min:60, max:120};
+      // Ignorer duree_estimee_min de la DB si > 240 min (données incorrectes)
+      // Durée barre : réelle si COMPLETE/INCOMPLET, sinon duree_estimee_min de la DB
+      // Durée : réelle si COMPLETE/INCOMPLET, estimée depuis DB sinon
+      // durMin = durée de base pour la barre
+      // Si ticket a eu une pause : utiliser duree_totale_min (estimée + pause cumulée)
+      const _pauseMin = tk.duree_pause_min || 0;
+      const durMin = (['COMPLETE','INCOMPLET'].includes(tk.statut_terrain) && tk.duree_min)
+        ? tk.duree_min              // durée réelle mesurée en DB (tout inclus)
+        : (tk.duree_totale_min      // estimée + pause cumulée (fourni par API)
+           || (tk.duree_estimee_min ? tk.duree_estimee_min + _pauseMin : 0)
+           || Math.round(_range.min + _rand * (_range.max - _range.min)));
+
+      // Fin barre : jamais après 18h
+      const endMin = Math.min(DAY_E, startMin + Math.min(durMin, 480));
+      const depasseJournee = false; // ticket J+1 n'apparaît pas dans le Gantt d'aujourd'hui
+
+      // Barre simple et continue (pas de pause déjeuner à exclure)
+      const segments = [{s: startMin, e: Math.min(DAY_E, startMin + durMin)}];
+
+      // Marquer pour tooltip
+      tk._depasseJournee = depasseJournee;
+
+      // Statut NULL ou ASSIGNE = planifié → barre mauve
+      if(!tk.statut_terrain || tk.statut_terrain === 'ASSIGNE') {
+        if(!tk.date_assignation) return '';
+        const startDtNull = new Date(tk.date_assignation);
+        let sMinNull = startDtNull.getHours()*60+startDtNull.getMinutes();
+        if(sMinNull < DAY_S || sMinNull >= DAY_E) sMinNull = DAY_S;
+        const lNull = pct(sMinNull);
+        const wNull = Math.max(2, (Math.min(tk.duree_estimee_min||60, 240))/DUR*100);
+        return `<div class="g-seg PLANIFIE" data-tkid="${tk.ticket_id}" data-code="${tk.code_ticket}"
+          style="position:absolute;height:22px;top:4px;left:${lNull}%;width:${wNull}%;z-index:3;
+          display:flex;align-items:center;padding:0 7px;white-space:nowrap;overflow:hidden">
+          📋 ${tk.code_ticket||'Assigné'}
+        </div>`;
+      }
+      // EN_PAUSE → barre orange pulsante — largeur = duree_totale (estimée + pause)
+      if(tk.statut_terrain === 'EN_PAUSE') {
+        const pauseMin  = tk.duree_pause_min  || 0;
+        const totalMin  = tk.duree_totale_min || (durMin + pauseMin);
+        const left  = pct(startMin);
+        const w     = Math.max(2, Math.min(totalMin, 480) / DUR * 100);
+        const fmtP  = m => m >= 60
+          ? Math.floor(m/60)+'h'+(m%60>0?String(m%60).padStart(2,'0'):'')
+          : m+'min';
+        return `<div class="g-seg EN_PAUSE" data-tkid="${tk.ticket_id}" data-code="${tk.code_ticket}"
+          style="position:absolute;height:22px;top:4px;left:${left}%;width:${w}%;z-index:3;
+          border-radius:5px;display:flex;align-items:center;padding:0 9px;
+          white-space:nowrap;overflow:hidden">
+          <span style="margin-right:4px">☕</span>
+          <span style="overflow:hidden;text-overflow:ellipsis;flex:1">${tk.code_ticket}</span>
+          ${pauseMin > 0 ? `<span style="opacity:0.75;font-size:8px;margin-left:4px">+${fmtP(pauseMin)}</span>` : ''}
+          <span style="opacity:0.75;font-size:8px;margin-left:4px">= ${fmtP(totalMin)}</span>
+        </div>`;
+      }
+
+      // EN_ROUTE, SUR_SITE, EN_COURS, COMPLETE, INCOMPLET → affichés
+
+      const id_attr=`data-tkid="${tk.ticket_id}" data-code="${tk.code_ticket}"`;
+
+      return segments.map((seg,si)=>{
+        const left=pct(seg.s);
+        const w=Math.max(1.5,(seg.e-seg.s)/DUR*100);
+        const isFirst=si===0;
+        // Durée allongée si pause prise
+        const _pauseMin = tk.duree_pause_min || 0;
+        const _durAffiche = durMin + _pauseMin;
+        // Durée formatée h:mm
+        // Durée réelle : depuis date_assignation (vision : duree = tout inclus)
+        let _rawDur = tk.duree_min;
+        if(!_rawDur && ['COMPLETE','INCOMPLET'].includes(tk.statut_terrain) && tk.date_fin_intervention) {
+          const _d1 = new Date(tk.date_assignation); // depuis assignation = tout inclus
+          const _d2 = new Date(tk.date_fin_intervention);
+          const _m = Math.round((_d2-_d1)/60000);
+          if(_m>0) _rawDur = _m;
+        }
+        if(!_rawDur) _rawDur = tk.duree_estimee_min || 0;
+        // Durée affichée = estimée + pause cumulée si applicable
+        const _pauseMinBar = tk.duree_pause_min || 0;
+        const _durBase  = _rawDur || 0;
+        const _durTotal = _durBase + _pauseMinBar;  // nouvelle durée totale
+        const isEstime  = !tk.duree_min && !!tk.duree_estimee_min;
+        const _fmtDurBar = m => m >= 60
+          ? Math.floor(m/60)+'h'+(m%60>0?String(m%60).padStart(2,'0'):'')
+          : m+'min';
+        // Afficher : durée_totale si pause, sinon durée seule
+        const _isEstimeBase = isEstime;
+        const durStr = _durTotal > 0
+          ? (_pauseMinBar > 0
+              ? (_isEstimeBase ? '~' : '') + _fmtDurBar(_durTotal) + ' (☕+' + _fmtDurBar(_pauseMinBar) + ')'
+              : (_isEstimeBase ? '~' : '') + _fmtDurBar(_durBase))
+          : '';
+        const icon = tk.statut_terrain==='INCOMPLET'?'⚠':tk.statut_terrain==='COMPLETE'?'✓':'';
+        const radius = segments.length>1?(isFirst?'5px 0 0 5px':'0 5px 5px 0'):'5px';
+        // Label principal = libelle tronqué
+        const libelle = tk.incident_libelle ? tk.incident_libelle.split(' ').slice(0,2).join(' ') : tk.code_ticket||'';
+        const j1Label = depasseJournee && si===0 ? `<span style="font-size:8px;opacity:0.8;margin-left:4px;background:rgba(255,165,0,0.3);padding:1px 4px;border-radius:3px">→J+1</span>` : '';
+        return `<div class="g-seg ${tk.statut_terrain}" ${id_attr}
+          style="left:${left}%;width:${w}%;border-radius:${radius};${si>0?'border-left:1px dashed rgba(255,255,255,0.2);':''}${depasseJournee?'border-right:2px dashed rgba(255,165,0,0.8);':''}"
+          title="${tk.code_ticket}${depasseJournee?' — Reprise demain 8h':''}">
+          ${icon?`<span style="font-size:10px">${icon}</span>`:''}
+          ${w>4?`<span style="overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0">${libelle}</span>`:''}
+          ${w>14&&durStr?`<span style="opacity:0.8;font-size:8px;font-weight:400;white-space:nowrap;margin-left:3px">${durStr}</span>`:''}
+          ${j1Label}
+        </div>`;
+      }).join('');
+    }).join('');
+
+
+
+    // Vérifier si un ticket est en retard (pas de statut terrain depuis durée estimée)
+    let retardHtml = '';
+    t.tickets.forEach(tk => {
+      if(['COMPLETE','INCOMPLET'].includes(tk.statut_terrain)) return;
+      if(!['SUR_SITE','EN_COURS'].includes(tk.statut_terrain)) return;
+
+      const fmtDur = m => m>=60
+        ? Math.floor(m/60)+'h'+(m%60>0?String(m%60).padStart(2,'0'):'')
+        : m+'min';
+      const tel = t.telephone || '';
+
+      // Retard = date_assignation + duree_estimee < now (vision : duree = tout inclus)
+      if(tk.duree_estimee_min && tk.date_assignation && !['COMPLETE','INCOMPLET'].includes(tk.statut_terrain)) {
+        const _xMs=s=>{if(!s)return null;const str=String(s);const mI=str.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);return mI?new Date(str).getTime():null;};
+        const daMs=_xMs(tk.date_assignation)||new Date(tk.date_assignation).getTime();
+        if(daMs){
+          const dep=Math.round((Date.now()-daMs-tk.duree_estimee_min*60000)/60000);
+          if(dep>0){
+            retardHtml+=`
+              <div style="display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap">
+                <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:4px;background:rgba(255,60,110,0.12);border:1px solid rgba(255,60,110,0.35);color:var(--red);font-family:var(--font-heading);font-size:9px;font-weight:700;animation:blink-ret 2s infinite">
+                  ⏱ +${fmtDur(dep)}
+                </span>
+                ${tel?`<a href="tel:${tel}" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:4px;border:1px solid rgba(0,200,100,0.4);background:rgba(0,200,100,0.08);color:var(--green);font-family:var(--font-heading);font-size:9px;font-weight:600;text-decoration:none"><i class="bi bi-telephone-fill"></i> Appeler</a>`:''}
+              </div>`;
+          }
+        }
+      }
+
+      // Statut + durée écoulée depuis assignation
+      const stClr={EN_ROUTE:'#4477ff',SUR_SITE:'var(--amber)',EN_COURS:'var(--accent)',COMPLETE:'var(--green)',INCOMPLET:'var(--red)'}[tk.statut_terrain]||'var(--text-dim)';
+      const stIcon={EN_ROUTE:'🚗',SUR_SITE:'📍',EN_COURS:'🔧',COMPLETE:'✅',INCOMPLET:'⚠️'}[tk.statut_terrain]||'';
+      const _daMs2=tk.date_assignation?new Date(tk.date_assignation).getTime():null;
+      const _elap=_daMs2?Math.round((Date.now()-_daMs2)/60000):null;
+      const _elapStr=_elap&&_elap>0?(' · '+(_elap>=60?Math.floor(_elap/60)+'h'+String(_elap%60).padStart(2,'0'):_elap+'min')):'';
+      retardHtml+=`
+        <div style="font-size:9px;color:${stClr};margin-top:3px;font-family:var(--font-heading);display:flex;align-items:center;gap:4px">
+          ${stIcon} ${tk.statut_terrain.replace('_',' ')}${_elapStr}
+          ${tk.code_ticket?`<span style="color:var(--text-dim);font-family:monospace;margin-left:2px">${tk.code_ticket}</span>`:''}
+        </div>`;
+    });
+
+    const rowOpacity=t.statut==='INDISPONIBLE'?'opacity:.35;':'';
+
+    // Pas de barre tant que le technicien n'a pas mis à jour son statut (EN_ROUTE = assigné seulement)
+    // La barre n'apparaît qu'à partir de SUR_SITE
+    const barsOrWaiting = bars;
+
+      // Bouton appeler toujours visible si téléphone dispo
+      const telBtn = t.telephone
+        ? `<a href="tel:${t.telephone}" onclick="event.stopPropagation()"
+            style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;margin-top:3px;
+            border-radius:4px;border:1px solid rgba(0,200,100,0.3);background:rgba(0,200,100,0.06);
+            color:var(--green);font-family:var(--font-heading);font-size:8px;font-weight:600;
+            text-decoration:none" title="Appel via téléphone/Skype/Teams — ${t.telephone}">
+            <i class="bi bi-telephone-fill"></i> ${t.telephone}
+          </a>` : '';
+
+    return `<div class="gantt-row" style="${rowOpacity}">
+      <div class="gantt-lbl">
+        <div class="glbl-name" style="display:flex;align-items:center;gap:5px">
+          ${stDot}<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.nom||'—'}</span>
+        </div>
+        <div class="glbl-mat" style="margin-top:2px">${t.matricule||'—'} · ${(t.secteur_nom||'').split(' ')[0]}</div>
+        ${telBtn}
+        ${retardHtml}
+      </div>
+      <div class="gantt-track">
+        <div class="gbar-row" style="position:relative">
+          ${barsOrWaiting}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Attacher événements tooltip et click après rendu
+  document.querySelectorAll('.g-seg[data-tkid]').forEach(el=>{
+    const tkId=parseInt(el.dataset.tkid);
+    const code=el.dataset.code;
+    // Retrouver le ticket dans techRows
+    let foundTk=null;
+    for(const t of techRows){
+      foundTk=t.tickets.find(tk=>tk.ticket_id===tkId);
+      if(foundTk) break;
+    }
+    if(foundTk){
+      el.addEventListener('mouseenter',e=>showTip(e,foundTk));
+      el.addEventListener('mousemove', e=>moveTip(e));
+      el.addEventListener('mouseleave',hideTip);
+    }
+    el.addEventListener('click',()=>{ hideTip(); showTicketHistorique(tkId,code); });
+  });
+}
+async function exportGanttExcel() {
+  const dateStr = document.getElementById('gantt-date')?.value || ganttToday();
+  const data = await api(`/api/gantt?date=${dateStr}`);
+  if(!data || !data.techniciens) { toast('Export','Aucune donnée à exporter','info'); return; }
+
+  const fmtDt = s => {
+    if(!s) return '';
+    const str = String(s);
+    const mIso = str.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    if(mIso) return `${mIso[3]}/${mIso[2]}/${mIso[1]} ${mIso[4]}:${mIso[5]}`;
+    const mRfc = str.match(/(\d{1,2}) (\w+) (\d{4}) (\d{2}):(\d{2})/);
+    if(mRfc){const mo={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+      return String(mRfc[1]).padStart(2,'0')+'/'+mo[mRfc[2]]+'/'+mRfc[3]+' '+mRfc[4]+':'+mRfc[5];}
+    return str.slice(0,16);
+  };
+  const fmtDur = m => !m ? '' : Math.floor(m/60)>0
+    ? Math.floor(m/60)+'h'+(m%60>0?String(m%60).padStart(2,'0'):'') : m+'min';
+
+  const rows = [['Date Gantt','ID Ticket','Code Ticket','ID Technicien','Technicien',
+    'Matricule','Secteur','Telephone','Code Incident','Type Incident','Libelle','Severite',
+    'Statut Terrain','Date Assignation','Date Arrivee Site','Date Debut Intervention',
+    'Date Fin Intervention','Duree Estimee','Duree Reelle','Cause Incomplete']];
+
+  data.techniciens.forEach(t => {
+    (t.tickets||[]).forEach(tk => {
+      // Durée réelle : uniquement pour COMPLETE/INCOMPLET
+      let dureeReelle = '';
+      if(tk.statut_terrain === 'COMPLETE' || tk.statut_terrain === 'INCOMPLET') {
+        if(tk.duree_min) {
+          // Priorité : durée réelle stockée en DB
+          dureeReelle = fmtDur(tk.duree_min);
+        } else if(tk.date_fin_intervention && tk.date_assignation) {
+          // Vision tout inclus : depuis date_assignation
+          const d1 = new Date(tk.date_assignation);
+          const d2 = new Date(tk.date_fin_intervention);
+          const mins = Math.round((d2 - d1) / 60000);
+          if(mins > 0) dureeReelle = fmtDur(mins);
+        }
+      }
+
+      rows.push([
+        dateStr, tk.ticket_id||'', tk.code_ticket||'',
+        t.technicien_id||'', t.nom||'', t.matricule||'',
+        t.secteur_nom||'', t.telephone||'',
+        tk.incident_code||'', (tk.type_incident||'').replace(/_/g,' '),
+        tk.incident_libelle||'', tk.severite||'', tk.statut_terrain||'',
+        fmtDt(tk.date_assignation), fmtDt(tk.date_arrivee_site),
+        fmtDt(tk.date_debut_intervention), fmtDt(tk.date_fin_intervention),
+        fmtDur(tk.duree_estimee_min),
+        dureeReelle,
+        tk.cause_incomplete||''
+      ]);
+    });
+  });
+
+  if(rows.length<=1) { toast('Export','Aucun ticket pour cette date','info'); return; }
+
+  // Colonnes dates et telephone préfixées par apostrophe → Excel affiche comme texte (pas #####)
+  const DATE_COLS = [7,13,14,15,16]; // indices 0-based : téléphone + 4 dates
+  const csv = rows.map((r,ri) =>
+    r.map((v,ci) => {
+      const val = String(v==null?'':v);
+      if(ri > 0 && DATE_COLS.includes(ci) && val)
+        return `"'${val.replace(/"/g,'""')}"`;
+      return `"${val.replace(/"/g,'""')}"`;
+    }).join(';')
+  ).join('\r\n');
+
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`gantt_${dateStr}.csv`; a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ Export réussi', `${rows.length-1} tickets exportés — ${dateStr}`, 'success');
+}
+
+async function showTicketHistorique(tkId, code) {
+  if(!tkId) return;
+  const data = await api(`/api/tickets/${tkId}`);
+  if(!data) { toast('Erreur','Impossible de charger le ticket','error'); return; }
+
+  const hist = data.historique || [];
+
+  // Vérifier si ticket en retard
+  let modalRetard = '';
+  // Retard : ticket actif dont date_assignation + duree est dépassé
+  if(data.statut_terrain && !['COMPLETE','INCOMPLET'].includes(data.statut_terrain) && data.duree_estimee_min && data.date_assignation) {
+    const debutRef = data.date_assignation; // vision tout inclus
+    if(debutRef) {
+      const dep = Math.round((new Date() - new Date(debutRef)) / 60000) - data.duree_estimee_min;
+      if(dep > 0) {
+        const tel = data.telephone || '';
+        const fmtDep = dep>=60 ? Math.floor(dep/60)+'h'+String(dep%60).padStart(2,'0') : dep+'min';
+        modalRetard = `
+          <div style="background:rgba(255,60,110,0.08);border:1px solid rgba(255,60,110,0.3);
+            border-radius:8px;padding:10px 14px;margin-bottom:14px;
+            display:flex;align-items:center;gap:10px">
+            <i class="bi bi-exclamation-triangle-fill" style="color:var(--red);font-size:18px;flex-shrink:0"></i>
+            <div style="flex:1;font-size:12px">
+              <strong style="color:var(--red)">En retard de ${fmtDep}</strong><br>
+              <span style="color:var(--text-dim)">Durée estimée dépassée — technicien bloqué</span>
+            </div>
+            ${tel ? `<a href="tel:${tel}"
+              style="display:inline-flex;align-items:center;gap:5px;padding:6px 14px;
+              border-radius:7px;border:1px solid var(--green);background:rgba(0,200,100,0.1);
+              color:var(--green);font-family:var(--font-heading);font-size:11px;font-weight:600;
+              text-decoration:none;white-space:nowrap">
+              <i class="bi bi-telephone-fill"></i> Appeler le technicien
+            </a>` : ''}
+          </div>`;
+      }
+    }
+  }
+
+  const stColor={EN_ROUTE:'#0066ff',SUR_SITE:'#ffa500',EN_COURS:'#00d4ff',COMPLETE:'#00c864',INCOMPLET:'#ff3c6e',EN_PAUSE:'#ff9500',ASSIGNE:'#8250ff'}
+
+  const modal = document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML=`
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:24px;width:460px;max-width:90vw;max-height:80vh;overflow-y:auto;position:relative">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-family:var(--font-heading);font-size:13px;font-weight:700;color:var(--accent);letter-spacing:1px">
+          <i class="bi bi-clock-history"></i> Historique · ${code}
+        </div>
+        <div onclick="this.closest('[style*=fixed]').remove()" style="cursor:pointer;color:var(--text-dim);font-size:18px;transition:color .2s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-dim)'">✕</div>
+      </div>
+
+      ${modalRetard}
+
+      <!-- Infos ticket -->
+      <div style="background:var(--bg2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <span class="badge ${data.severite}">${data.severite}</span>
+          <span class="badge ${data.statut_terrain||data.statut}">${data.statut_terrain||data.statut}</span>
+        </div>
+        <div style="color:var(--text);margin-top:6px">${data.libelle||data.incident_libelle||'—'}</div>
+        <div style="color:var(--text-dim);margin-top:2px">${data.nom||''} ${data.prenom||''} · ${data.matricule||'—'}</div>
+        ${data.cause_incomplete?`<div style="color:var(--red);margin-top:6px;padding:6px 8px;background:rgba(255,60,110,.08);border-radius:5px;border-left:2px solid var(--red)">
+          <i class="bi bi-exclamation-triangle"></i> ${data.cause_incomplete}</div>`:''}
+      </div>
+
+      <!-- Timeline historique -->
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:10px;font-family:var(--font-heading)">Timeline</div>
+      ${hist.length===0
+        ?`<div style="color:var(--text-dim);font-size:12px;text-align:center;padding:14px">Aucun historique disponible</div>`
+        :hist.map((h,i)=>{
+          const c=stColor[h.statut_apres]||'#888';
+          const _sh=String(h.updated_at||'');const _mh=_sh.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);const dt=_mh?_mh[3]+'/'+_mh[2]+' '+_mh[4]+':'+_mh[5]:'—';
+          const isLast=i===hist.length-1;
+          return `<div style="display:flex;gap:12px;padding-bottom:${isLast?'0':'14px'};position:relative">
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <div style="width:10px;height:10px;border-radius:50%;background:${c};flex-shrink:0;margin-top:2px"></div>
+              ${!isLast?`<div style="width:1px;flex:1;background:var(--border2);margin-top:4px"></div>`:''}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px">
+                <span style="font-size:11px;font-weight:600;color:${c}">${h.statut_apres}</span>
+                <span style="font-size:9px;color:var(--text-dim);margin-left:auto">${dt}</span>
+              </div>
+              <div style="font-size:10px;color:var(--text-dim)">${h.updated_by||'—'}</div>
+              ${h.cause?`<div style="font-size:11px;color:var(--amber);margin-top:3px;padding:4px 7px;background:rgba(255,165,0,.08);border-radius:4px">⚠ ${h.cause}</div>`:''}
+              ${h.commentaire?`<div style="font-size:10px;color:var(--text-dim);margin-top:2px;font-style:italic">${h.commentaire}</div>`:''}
+            </div>
+          </div>`;
+        }).join('')}
+    </div>`;
+
+  modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+// ══════════════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════════════
+function toast(title,msg,type='info'){
+  const icons={success:'✅',error:'❌',info:'ℹ️'};
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<div class="toast-icon">${icons[type]||'ℹ️'}</div>
+    <div class="toast-body"><div class="toast-title">${title}</div><div>${(msg||'').replace(/\n/g,'<br>')}</div></div>`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>{el.style.transition='opacity .4s';el.style.opacity='0';setTimeout(()=>el.remove(),400);},5000);
+}
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+// ── refreshKPI : mis à jour de tous les compteurs ──
+async function refreshKPI() {
+  const kpi = await api('/api/kpi');
+  if(!kpi) return;
+  // k-crit = incidents OUVERT + CRITIQUE seulement (pas les majeurs/résolus)
+  document.getElementById('k-crit').textContent    = kpi.incidents_critiques ?? '—';
+  document.getElementById('k-ouv').textContent     = kpi.incidents_ouverts   ?? '—';
+  document.getElementById('k-encours').textContent = kpi.en_maintenance_active ?? '—';
+  document.getElementById('k-tickets-actifs').textContent = (kpi.tickets_actifs||0)+' tickets actifs';
+  document.getElementById('k-dispo').textContent   = kpi.disponibles ?? '—';
+  const nbCritEl = document.getElementById('nb-crit');
+  if(nbCritEl) nbCritEl.textContent = kpi.incidents_critiques ?? '—';
+  const fmtKpi = m => !m?'—':Math.floor(m/60)>0?Math.floor(m/60)+'h'+(Math.round(m%60)>0?String(Math.round(m%60)).padStart(2,'0'):''):Math.round(m)+'min';
+  const durEl = document.getElementById('k-duree-moy');
+  if(durEl) durEl.textContent = fmtKpi(kpi.duree_estimee_moy_min);
+  const mttrEl = document.getElementById('k-mttr');
+  if(mttrEl) mttrEl.textContent = fmtKpi(kpi.mttr_moyen_min);
+  const tauxEl = document.getElementById('k-taux');
+  if(tauxEl) tauxEl.textContent = kpi.taux_resolution_pct != null ? kpi.taux_resolution_pct+'%' : '—';
+}
+// Rafraîchir toutes les 15s
+setInterval(refreshKPI, 15000);
+
+// ══ POPUP J+1 ══
+function showJ1ConfirmPopup(res, inc, tech) {
+  const sevColor={CRITIQUE:'var(--red)',MAJEUR:'var(--amber)',MINEUR:'#ffcc00'}[inc.severite||res.severite]||'var(--accent)';
+  const fmtDur=m=>!m?'—':Math.floor(m/60)>0?Math.floor(m/60)+'h'+(m%60>0?String(Math.round(m%60)).padStart(2,'0'):''):Math.round(m)+'min';
+  const da=String(res.date_assignation_j1||'');
+  const mm=da.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  const dateJ1=mm?`${mm[3]}/${mm[2]}/${mm[1]} à ${mm[4]}:${mm[5]}`:'demain à 09:00';
+  const jourJ1=mm?(()=>{const d=new Date(da);const j=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];return j[d.getDay()]})():'Demain';
+  const overlay=document.createElement('div');
+  overlay.id='j1-confirm-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)';
+  overlay.innerHTML=`
+    <div style="background:var(--surface);border:2px solid rgba(255,165,0,0.5);border-radius:18px;padding:32px;max-width:480px;width:100%;position:relative;animation:tin .3s ease;box-shadow:0 16px 60px rgba(0,0,0,.9)">
+      <div onclick="document.getElementById('j1-confirm-overlay').remove()" style="position:absolute;top:14px;right:16px;cursor:pointer;color:var(--text-dim);font-size:22px;line-height:1" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-dim)'">✕</div>
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="display:inline-flex;width:64px;height:64px;border-radius:50%;background:rgba(255,165,0,0.12);border:2px solid rgba(255,165,0,0.4);align-items:center;justify-content:center;font-size:30px;margin-bottom:14px">⏰</div>
+        <div style="font-family:var(--font-heading);font-size:18px;font-weight:800;color:var(--amber);margin-bottom:8px">Ticket non assignable aujourd'hui</div>
+        <div style="font-size:13px;color:var(--text-dim);line-height:1.7">
+          La durée estimée dépasse <strong style="color:var(--red)">18h00</strong>
+          (fin estimée : <strong style="color:var(--red)">${res.fin_estimee}</strong>).
+        </div>
+      </div>
+      <div style="background:var(--bg2);border-radius:12px;padding:16px 18px;margin-bottom:20px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px">
+          <div><div style="color:var(--text-dim);font-family:var(--font-heading);font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Incident</div>
+            <div style="font-weight:700;font-family:monospace;color:rgba(0,212,255,.85)">${inc.code_incident||res.incident_code||'—'}</div></div>
+          <div><div style="color:var(--text-dim);font-family:var(--font-heading);font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Sévérité</div>
+            <div style="font-weight:800;color:${sevColor}">${inc.severite||res.severite||'—'}</div></div>
+          <div><div style="color:var(--text-dim);font-family:var(--font-heading);font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Technicien</div>
+            <div style="font-weight:600">${res.technicien||'—'}</div>
+            <div style="font-size:10px;color:var(--text-dim)">${res.matricule||'—'} · ${res.distance_km||'?'} km</div></div>
+          <div><div style="color:var(--text-dim);font-family:var(--font-heading);font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Durée estimée</div>
+            <div style="font-weight:700;color:var(--amber);font-size:14px">${fmtDur(res.duree_estimee)}</div>
+            <div style="font-size:10px;color:var(--text-dim)">🔧 Fin estimée : ${res.fin_estimee}</div></div>
+        </div>
+      </div>
+      <div style="background:rgba(255,165,0,0.07);border:1px solid rgba(255,165,0,0.3);border-radius:10px;padding:14px 16px;margin-bottom:22px;text-align:center">
+        <div style="font-family:var(--font-heading);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin-bottom:6px">Affectation proposée</div>
+        <div style="font-size:22px;font-weight:800;font-family:var(--font-heading);color:var(--green)">${jourJ1} — ${dateJ1}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:6px">Le technicien reste <strong style="color:var(--green)">DISPONIBLE</strong> aujourd'hui et reçoit la notification demain matin.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <button onclick="document.getElementById('j1-confirm-overlay').remove()"
+          style="padding:14px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--text-dim);font-family:var(--font-heading);font-size:12px;font-weight:600;cursor:pointer"
+          onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">
+          <i class="bi bi-x-circle"></i> Annuler
+        </button>
+        <button onclick="confirmJ1Assign(${inc.id||res.incident_id||0},${tech.id})"
+          style="padding:14px;border-radius:10px;background:linear-gradient(135deg,rgba(255,165,0,0.2),rgba(255,165,0,0.08));border:1.5px solid rgba(255,165,0,0.6);color:var(--amber);font-family:var(--font-heading);font-size:12px;font-weight:700;cursor:pointer"
+          onmouseover="this.style.background='rgba(255,165,0,0.25)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(255,165,0,0.2),rgba(255,165,0,0.08))'">
+          <i class="bi bi-calendar-check-fill"></i> Confirmer — Demain 09h
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click',e=>{if(e.target===overlay) overlay.remove();});
+}
+
+async function confirmJ1Assign(incId, techId) {
+  const overlay=document.getElementById('j1-confirm-overlay');
+  if(overlay) overlay.remove();
+  const res=await api('/api/dispatch/assigner-j1',{method:'POST',body:JSON.stringify({incident_id:incId,technicien_id:techId,heure_debut:'09:00'})});
+  if(res && res.success) {
+    const da=String(res.date_assignation||'');
+    const mm=da.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    const dateStr=mm?`${mm[3]}/${mm[2]} à ${mm[4]}:${mm[5]}`:'demain 09:00';
+    toast('📅 Ticket J+1 confirmé',`${res.code_ticket} → ${res.technicien}\nReprise : ${dateStr}`,'success');
+    selTech=null; pendInc=null; closeDP();
+    setTimeout(async()=>{await buildMapLayers();await refreshKPI();},800);
+  } else {
+    toast('Erreur',res?.error||'Erreur API','error');
+  }
+}
+
+function redispatchTicket(incId) {
+  if(!incId) { toast('Erreur','Incident non trouvé','error'); return; }
+  toast('🔄 Redispatch','Ouverture du panel de dispatch...','info');
+  dispatchInc(incId);
+}
+
+async function dispatchInc(id){
+  // Charger le détail complet de l'incident (lat/lng + sévérité)
+  const inc = await api(`/api/incidents/${id}`);
+  if(!inc){ toast('Erreur','Incident introuvable','error'); return; }
+  const lat = inc.latitude || inc.lat;
+  const lng = inc.longitude || inc.lng;
+
+  // Basculer sur la carte
+  const carteBtn = document.querySelectorAll('.npill')[1];
+  goPage('carte', carteBtn);
+
+  // Attendre init carte si besoin
+  if(!mapReady){ await new Promise(r=>setTimeout(r,600)); }
+  if(!MAP){ await initMap(); await new Promise(r=>setTimeout(r,400)); }
+  else { await new Promise(r=>setTimeout(r,200)); }
+
+  // Zoom précis sur l'incident
+  if(MAP && lat && lng) MAP.flyTo([lat, lng], 16, {duration:1});
+
+  // Ouvrir le panel dispatch avec l'incident complet
+  showIncDP({...inc, lat, lng}, true);
+}
+
+async function runFermerRetards() {
+  const res=await api('/api/tickets/fermer-retards',{method:'POST'});
+  if(!res||!res.count) return;
+  res.fermes.forEach(tk=>{
+    toast('⏱ Clôture automatique',`${tk.code_ticket} — ${tk.technicien} — durée dépassée`,'error');
+  });
+  await refreshKPI();
+  await buildEscalade();
+  const gPage=document.getElementById('page-gantt');
+  if(gPage&&gPage.classList.contains('active')){
+    const dv=document.getElementById('gantt-date')?.value||ganttToday();
+    if(dv===ganttToday()) renderGantt();
+  }
+  const mPage=document.getElementById('page-carte');
+  if(mPage&&mPage.classList.contains('active') && MAP){
+    await buildMapLayers();
+  }
+}
+setInterval(runFermerRetards,30000);
+setTimeout(runFermerRetards,5000);
+setInterval(buildEscalade,120000);
+setInterval(refreshKPI,15000);
+
+window.addEventListener('load', async () => {
+  const health=await api('/api/health');
+  if(health&&health.status==='ok'){
+    document.getElementById('api-status').textContent='● PostgreSQL';
+    document.getElementById('api-status').style.color='var(--green)';
+    toast('📡 NOC Admin v3',`Connecté · ${health.incidents} incidents · ${health.tickets} tickets`,'success');
+  } else {
+    document.getElementById('api-status').textContent='● Flask hors ligne';
+    document.getElementById('api-status').style.color='var(--red)';
+    toast('⚠ Flask non détecté','Démarre : python app.py','info');
+  }
+  await renderDash();
+  await buildEscalade();
+  await initGanttSnapshot();
+  startGanttAutoRefresh();
+});
+</script>
+</body>
+</html>
