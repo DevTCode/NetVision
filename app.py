@@ -354,25 +354,26 @@ def incident_detail(inc_id):
 
 @app.route("/api/techniciens")
 def techniciens():
-    filters, params = [], []
-    for col in ["secteur_id", "statut"]:
-        val = request.args.get(col)
-        if val:
-            filters.append(f"t.{col} = %s")
-            params.append(int(val) if col == "secteur_id" else val.upper())
-    where = "WHERE " + " AND ".join(filters) if filters else ""
-    # Statut calculé depuis fact_tickets pour être toujours exact
+    secteur_id_filter = request.args.get("secteur_id")
+    statut_filter = (request.args.get("statut") or "").upper().strip()
+    sect_where = "AND t.secteur_id = %s" if secteur_id_filter else ""
+    sect_params = [int(secteur_id_filter)] if secteur_id_filter else []
+
     rows = query(f"""
-        SELECT t.*,
-               s.nom AS secteur_nom,
-               CASE
-                 WHEN tk.id IS NOT NULL AND tk.statut_terrain = 'EN_PAUSE' THEN 'EN_PAUSE'
-                 WHEN tk.id IS NOT NULL THEN 'EN_INTERVENTION'
-                 ELSE t.statut
-               END AS statut,
-               tk.id          AS ticket_actif_id,
-               tk.code_ticket AS ticket_actif_code,
-               tk.statut_terrain AS ticket_actif_statut
+        SELECT
+            t.id, t.matricule, t.nom, t.prenom, t.telephone,
+            t.secteur_id, t.latitude, t.longitude, t.competences,
+            t.annees_exp, t.note_perf, t.heure_debut, t.heure_fin,
+            t.raison_indisponibilite, t.ticket_actif_id,
+            s.nom AS secteur_nom,
+            CASE
+              WHEN tk.id IS NOT NULL AND tk.statut_terrain = 'EN_PAUSE' THEN 'EN_PAUSE'
+              WHEN tk.id IS NOT NULL THEN 'EN_INTERVENTION'
+              ELSE t.statut
+            END AS statut,
+            tk.id           AS ticket_actif_id_calc,
+            tk.code_ticket  AS ticket_actif_code,
+            tk.statut_terrain AS ticket_actif_statut
         FROM dim_technicien t
         LEFT JOIN dim_secteur s ON t.secteur_id = s.id
         LEFT JOIN LATERAL (
@@ -381,12 +382,17 @@ def techniciens():
             WHERE technicien_id = t.id
               AND (statut_terrain IS NULL
                    OR statut_terrain NOT IN ('COMPLETE','INCOMPLET'))
+              AND date_assignation <= (NOW() AT TIME ZONE 'Africa/Casablanca')
             ORDER BY date_creation DESC
             LIMIT 1
         ) tk ON TRUE
-        {where}
+        WHERE 1=1 {sect_where}
         ORDER BY t.nom
-    """, params)
+    """, sect_params)
+
+    if statut_filter:
+        rows = [r for r in rows if (r.get('statut') or '').upper() == statut_filter]
+
     return ok(paginate(rows))
 
 @app.route("/api/techniciens/disponibles")
@@ -505,7 +511,7 @@ def carte():
             WHERE technicien_id = t.id
               AND (statut_terrain IS NULL
                    OR statut_terrain NOT IN ('COMPLETE','INCOMPLET'))
-              AND date_assignation <= NOW()
+              AND date_assignation <= (NOW() AT TIME ZONE 'Africa/Casablanca')
             ORDER BY date_assignation ASC LIMIT 1
         ) tk ON TRUE
         WHERE t.latitude IS NOT NULL
@@ -614,42 +620,55 @@ def assigner_ticket():
 
     date_assignation = now
     fh, fm = int(fin_eff // 60), int(fin_eff % 60)
-    db  = get_db()
+
+    # Connexion dédiée indépendante pour garantir le commit
+    import psycopg2 as _pg; import psycopg2.extras as _pext
+    db = _pg.connect(host=DB_CONFIG["host"], port=DB_CONFIG["port"],
+        dbname=DB_CONFIG["dbname"], user=DB_CONFIG["user"], password=DB_CONFIG["password"],
+        cursor_factory=_pext.RealDictCursor, options="-c timezone=Africa/Casablanca")
     cur = db.cursor()
 
-    cur.execute("""
-        INSERT INTO fact_tickets
-            (code_ticket, incident_id, technicien_id, secteur_id, severite,
-             statut, statut_terrain, date_creation, date_assignation,
-             distance_km, duree_estimee_min, updated_by)
-        VALUES (%s,%s,%s,%s,%s,'ASSIGNE',NULL,%s,%s,%s,%s,'ADMIN')
-        RETURNING id, code_ticket
-    """, (
-        f"TKT-{inc_id:04d}-{tech_id:03d}-{now.strftime('%H%M%S')}",
-        inc_id, tech_id, inc["secteur_id"], inc["severite"],
-        now, date_assignation, dist, duree_min,
-    ))
-    new = dict(cur.fetchone())
-    new_id, new_code = new["id"], new["code_ticket"]
+    try:
+        cur.execute("""
+            INSERT INTO fact_tickets
+                (code_ticket, incident_id, technicien_id, secteur_id, severite,
+                 statut, statut_terrain, date_creation, date_assignation,
+                 distance_km, duree_estimee_min, updated_by)
+            VALUES (%s,%s,%s,%s,%s,'ASSIGNE',NULL,%s,%s,%s,%s,'ADMIN')
+            RETURNING id, code_ticket
+        """, (
+            f"TKT-{inc_id:04d}-{tech_id:03d}-{now.strftime('%H%M%S')}",
+            inc_id, tech_id, inc["secteur_id"], inc["severite"],
+            now, date_assignation, dist, duree_min,
+        ))
+        new = dict(cur.fetchone())
+        new_id, new_code = new["id"], new["code_ticket"]
 
-    # Si reprise demain : technicien reste DISPONIBLE jusqu'à demain
-    if reprise_demain:
-        cur.execute("UPDATE dim_technicien SET statut='DISPONIBLE', ticket_actif_id=%s WHERE id=%s",
-                    (new_id, tech_id))
-    else:
-        cur.execute("UPDATE dim_technicien SET statut='EN_INTERVENTION', ticket_actif_id=%s WHERE id=%s",
-                    (new_id, tech_id))
-    cur.execute("""UPDATE fact_incidents
-                   SET statut='EN_COURS', ticket_id=%s,
-                       technicien_assigne_id=%s, technicien_assigne_nom=%s
-                   WHERE id=%s""",
-                (new_id, tech_id, f"{tech['prenom']} {tech['nom']}", inc_id))
-    commentaire = f"Reprise demain {date_assignation.strftime('%d/%m à %H:%M')}" if reprise_demain else "Ticket créé et assigné"
-    cur.execute("""INSERT INTO ticket_historique
-                   (ticket_id,code_ticket,statut_avant,statut_apres,updated_by,commentaire,updated_at)
-                   VALUES (%s,%s,NULL,'ASSIGNE','ADMIN',%s,%s)""",
-                (new_id, new_code, commentaire, now))
-    db.commit()
+        # Si reprise demain : technicien reste DISPONIBLE jusqu'à demain
+        if reprise_demain:
+            cur.execute("UPDATE dim_technicien SET statut='DISPONIBLE', ticket_actif_id=%s WHERE id=%s",
+                        (new_id, tech_id))
+        else:
+            cur.execute("UPDATE dim_technicien SET statut='EN_INTERVENTION', ticket_actif_id=%s WHERE id=%s",
+                        (new_id, tech_id))
+        cur.execute("""UPDATE fact_incidents
+                       SET statut='EN_COURS', ticket_id=%s,
+                           technicien_assigne_id=%s, technicien_assigne_nom=%s
+                       WHERE id=%s""",
+                    (new_id, tech_id, f"{tech['prenom']} {tech['nom']}", inc_id))
+        commentaire = f"Reprise demain {date_assignation.strftime('%d/%m à %H:%M')}" if reprise_demain else "Ticket créé et assigné"
+        cur.execute("""INSERT INTO ticket_historique
+                       (ticket_id,code_ticket,statut_avant,statut_apres,updated_by,commentaire,updated_at)
+                       VALUES (%s,%s,NULL,'ASSIGNE','ADMIN',%s,%s)""",
+                    (new_id, new_code, commentaire, now))
+        db.commit()
+        db.close()
+        log.info(f"Dispatch OK: {new_code} tech={tech_id}")
+    except Exception as e:
+        try: db.rollback(); db.close()
+        except: pass
+        log.error(f"Dispatch ERREUR: {e}")
+        return err(f"Erreur création ticket: {str(e)}", 500)
 
     return jsonify({
         "success":          True,
@@ -859,14 +878,16 @@ def gantt():
         # + tickets terminés aujourd'hui (COMPLETE/INCOMPLET)
         # Exclure J+1 : statut NULL et date_assignation future
         join_cond = """(
-                -- Tickets actifs en cours (même assignés hier/avant)
+                -- Tickets actifs (statut terrain réel)
                 tk.statut_terrain IN ('EN_ROUTE','SUR_SITE','EN_COURS','EN_PAUSE')
                 OR
-                -- Tickets ASSIGNE (statut_terrain NULL) non encore terminés
-                tk.statut_terrain IS NULL
+                -- Tickets ASSIGNE aujourd'hui seulement (exclure J+1 futurs)
+                ((tk.statut_terrain IS NULL OR tk.statut_terrain = 'ASSIGNE')
+                 AND tk.date_assignation <= (NOW() AT TIME ZONE 'Africa/Casablanca'))
                 OR
                 -- Tickets terminés aujourd'hui
-                DATE(COALESCE(tk.date_fin_intervention, tk.date_creation)) = %s
+                (tk.statut_terrain IN ('COMPLETE','INCOMPLET')
+                 AND DATE(tk.date_fin_intervention) = %s)
               )"""
         q_params = [today]
     else:
@@ -1111,31 +1132,45 @@ def assigner_ticket_j1():
     now = datetime.now()
     duree_min = inc.get("duree_estimee_min") or 60
     date_assignation = (now + timedelta(days=1)).replace(hour=9, minute=0, second=0, microsecond=0)
-    db = get_db(); cur = db.cursor()
-    cur.execute("""
-        INSERT INTO fact_tickets
-            (code_ticket, incident_id, technicien_id, secteur_id, severite,
-             statut, statut_terrain, date_creation, date_assignation,
-             distance_km, duree_estimee_min, updated_by)
-        VALUES (%s,%s,%s,%s,%s,'ASSIGNE',NULL,%s,%s,%s,%s,'ADMIN')
-        RETURNING id, code_ticket
-    """, (f"TKT-{inc_id:04d}-{tech_id:03d}-{now.strftime('%H%M%S')}",
-          inc_id, tech_id, inc["secteur_id"], inc["severite"],
-          now, date_assignation, dist, duree_min))
-    new = dict(cur.fetchone())
-    new_id, new_code = new["id"], new["code_ticket"]
-    # Technicien reste DISPONIBLE aujourd'hui (ticket J+1)
-    cur.execute("UPDATE dim_technicien SET statut='DISPONIBLE', ticket_actif_id=%s WHERE id=%s",
-                (new_id, tech_id))
-    cur.execute("""UPDATE fact_incidents SET statut='EN_COURS', ticket_id=%s,
-                   technicien_assigne_id=%s, technicien_assigne_nom=%s WHERE id=%s""",
-                (new_id, tech_id, f"{tech['prenom']} {tech['nom']}", inc_id))
-    cur.execute("""INSERT INTO ticket_historique
-                   (ticket_id,code_ticket,statut_avant,statut_apres,updated_by,commentaire,updated_at)
-                   VALUES (%s,%s,NULL,'ASSIGNE','ADMIN',%s,%s)""",
-                (new_id, new_code,
-                 f"Assignation J+1 — reprise {date_assignation.strftime('%d/%m à %H:%M')}", now))
-    db.commit()
+
+    # Connexion dédiée pour garantir le commit J+1
+    import psycopg2 as _pg; import psycopg2.extras as _pext
+    _db = _pg.connect(host=DB_CONFIG["host"], port=DB_CONFIG["port"],
+        dbname=DB_CONFIG["dbname"], user=DB_CONFIG["user"], password=DB_CONFIG["password"],
+        cursor_factory=_pext.RealDictCursor, options="-c timezone=Africa/Casablanca")
+    _cur = _db.cursor()
+    try:
+        _cur.execute("""
+            INSERT INTO fact_tickets
+                (code_ticket, incident_id, technicien_id, secteur_id, severite,
+                 statut, statut_terrain, date_creation, date_assignation,
+                 distance_km, duree_estimee_min, updated_by)
+            VALUES (%s,%s,%s,%s,%s,'ASSIGNE',NULL,%s,%s,%s,%s,'ADMIN')
+            RETURNING id, code_ticket
+        """, (f"TKT-{inc_id:04d}-{tech_id:03d}-{now.strftime('%H%M%S')}",
+              inc_id, tech_id, inc["secteur_id"], inc["severite"],
+              now, date_assignation, dist, duree_min))
+        new = dict(_cur.fetchone())
+        new_id, new_code = new["id"], new["code_ticket"]
+        # Technicien reste DISPONIBLE aujourd'hui (ticket J+1)
+        _cur.execute("UPDATE dim_technicien SET statut='DISPONIBLE', ticket_actif_id=%s WHERE id=%s",
+                    (new_id, tech_id))
+        _cur.execute("""UPDATE fact_incidents SET statut='EN_COURS', ticket_id=%s,
+                       technicien_assigne_id=%s, technicien_assigne_nom=%s WHERE id=%s""",
+                    (new_id, tech_id, f"{tech['prenom']} {tech['nom']}", inc_id))
+        _cur.execute("""INSERT INTO ticket_historique
+                       (ticket_id,code_ticket,statut_avant,statut_apres,updated_by,commentaire,updated_at)
+                       VALUES (%s,%s,NULL,'ASSIGNE','ADMIN',%s,%s)""",
+                    (new_id, new_code,
+                     f"Assignation J+1 — reprise {date_assignation.strftime('%d/%m à %H:%M')}", now))
+        _db.commit()
+        _db.close()
+        log.info(f"J+1 OK: {new_code} tech={tech_id} date={date_assignation}")
+    except Exception as _e:
+        try: _db.rollback(); _db.close()
+        except: pass
+        log.error(f"J+1 ERREUR: {_e}")
+        return err(f"Erreur J+1: {str(_e)}", 500)
     return jsonify({"success": True, "ticket_id": new_id, "code_ticket": new_code,
                     "technicien": f"{tech['prenom']} {tech['nom']}",
                     "date_assignation": date_assignation.isoformat(),
