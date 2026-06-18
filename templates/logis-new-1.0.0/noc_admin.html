@@ -106,9 +106,9 @@ body::before {
 }
 
 .logo-wrap { display:flex; align-items:center; gap:10px; padding:4px 6px 18px; margin-bottom:10px; border-bottom:1px solid var(--border2); }
-.logo-icon-wrap {
+.logo-icon {
   width:34px; height:34px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  background: linear-gradient(135deg, #000722, #0066ff);
   border-radius:8px; display:flex; align-items:center; justify-content:center;
   font-size:16px; color:#fff; flex-shrink:0;
 }
@@ -117,7 +117,12 @@ body::before {
   font-size:17px; font-weight:800; color:#fff; letter-spacing:-0.5px;
 }
 .logo-name span { color: var(--accent); }
-.logo-role { font-size:10px; color:var(--text-dim); letter-spacing:0.8px; text-transform:uppercase; }
+.logo-sub {
+  font-size:11px; color:rgba(200,212,232,0.55); margin-top:1px;
+  display:flex; align-items:center; gap:4px;
+}
+
+.logo-sub { font-size:10px; color:var(--text-dim); letter-spacing:0.8px; text-transform:uppercase; }
 
 /* Nav pills — verticales dans la sidebar */
 .nav-pills { display:flex; flex-direction:column; gap:4px; flex:1; }
@@ -550,10 +555,10 @@ canvas { max-height:190px; }
 <!-- ── SIDEBAR ── -->
 <div class="sidebar">
   <div class="logo-wrap">
-  <div class="logo-icon-wrap"><i class="bi bi-reception-4"></i></div>
+  <div class="logo-icon"><i class="bi bi-reception-4"></i></div>
     <div>
       <div class="logo-name">Net<span>Vision</span></div>
-      <div class="logo-role">NOC Admin</div>
+      <div class="logo-sub"><i class="bi bi-display-fill"></i> NOC Admin</div>
     </div>
   </div>
 
@@ -663,15 +668,18 @@ canvas { max-height:190px; }
         <canvas id="ch-reseau"></canvas>
       </div>
     </div>
-    <!-- Évolution 7j + Escalade -->
-    <div class="row2">
-      <div class="card">
-        <div class="card-title"><i class="bi bi-graph-up-arrow" style="color:var(--green)"></i> Évolution — 7 derniers jours</div>
-        <canvas id="ch-evolution" style="max-height:175px"></canvas>
-      </div>
-      <div class="card">
-        <div class="card-title"><i class="bi bi-exclamation-octagon-fill" style="color:var(--red)"></i> 🚨 Escalade critiques non assignés <span id="esc-count" style="color:var(--red);margin-left:4px"></span></div>
-        <div id="esc-list" style="max-height:175px;overflow-y:auto"></div>
+    <!-- Répartition interventions terrain -->
+    <div class="row2" style="grid-template-columns:1fr">
+      <div class="card" style="display:flex;align-items:center;gap:24px;padding:18px 24px">
+        <div style="flex:0 0 auto">
+          <div class="card-title" style="margin-bottom:10px">
+            <i class="bi bi-pie-chart-fill" style="color:var(--accent)"></i>
+            Répartition des interventions terrain
+            <span style="font-size:9px;color:var(--text-dim);margin-left:6px">statut réel · toutes interventions</span>
+          </div>
+          <canvas id="ch-tickets-statut" style="max-height:160px;max-width:160px"></canvas>
+        </div>
+        <div id="tickets-statut-legend" style="flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
       </div>
     </div>
     <!-- MTTR secteur + Perf techniciens -->
@@ -1093,22 +1101,45 @@ async function buildCharts() {
       'rgba(59,130,246,.45)','rgba(236,72,153,.45)','rgba(16,185,129,.45)','rgba(239,68,68,.45)'];
     mkBar('ch-secteur', rs.map(r=>r.secteur), rs.map(r=>r.nb_incidents), sc2, true);
   }
-  // Évolution 7 jours
-  const rev = await api('/api/incidents/evolution');
-  if(rev && rev.length) {
-    const fmtJ = s=>{const m=String(s||'').match(/(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+'/'+m[2]:'—';};
-    if(CHARTS['ch-evolution']) CHARTS['ch-evolution'].destroy();
-    const ctxEv=document.getElementById('ch-evolution');
-    if(ctxEv) CHARTS['ch-evolution']=new Chart(ctxEv.getContext('2d'),{
-      type:'line',
-      data:{labels:rev.map(r=>fmtJ(r.jour)),datasets:[
-        {label:'Total',data:rev.map(r=>r.total),borderColor:'rgba(0,212,255,.9)',backgroundColor:'rgba(0,212,255,.07)',tension:.4,fill:true,pointRadius:4},
-        {label:'Résolus',data:rev.map(r=>r.resolus),borderColor:'rgba(0,200,100,.9)',backgroundColor:'rgba(0,200,100,.07)',tension:.4,fill:true,pointRadius:4},
-        {label:'Critiques',data:rev.map(r=>r.critiques),borderColor:'rgba(255,60,110,.9)',backgroundColor:'transparent',tension:.4,fill:false,pointRadius:4},
-      ]},
-      options:{...C_OPTS,plugins:{...C_OPTS.plugins,legend:{display:true,labels:{color:'rgba(200,212,232,.6)',font:{size:9},boxWidth:12,padding:10}}}}
+  // Donut — Répartition tickets terrain
+  function buildTicketsDonut(kd) {
+    if(!kd) return;
+    const complets   = kd.tickets_complets   || 0;
+    const incomplets = kd.tickets_incomplets || 0;
+    const actifs     = kd.tickets_actifs     || 0;
+    const total      = kd.total_tickets      || 0;
+    const planifies  = Math.max(0, total - complets - incomplets - actifs);
+    const vals   = [complets, incomplets, actifs, planifies];
+    const labels = ['Complétés','Incomplets','En cours','Planifiés'];
+    const cols   = ['rgba(0,200,100,.85)','rgba(255,60,110,.85)','rgba(0,212,255,.85)','rgba(130,80,255,.85)'];
+    if(CHARTS['ch-tickets-statut']) CHARTS['ch-tickets-statut'].destroy();
+    const ctx = document.getElementById('ch-tickets-statut');
+    if(!ctx) return;
+    CHARTS['ch-tickets-statut'] = new Chart(ctx.getContext('2d'), {
+      type: 'doughnut',
+      data: { labels, datasets:[{ data:vals, backgroundColor:cols, borderWidth:0, hoverOffset:8 }]},
+      options: { ...C_OPTS, cutout:'65%',
+        plugins:{ ...C_OPTS.plugins,
+          legend:{ display:false },
+          tooltip:{ ...C_OPTS.plugins?.tooltip,
+            callbacks:{ label: ctx => ` ${ctx.label} : ${ctx.parsed}` }
+          }
+        }
+      }
     });
+    // Légende manuelle avec chiffres
+    const leg = document.getElementById('tickets-statut-legend');
+    if(leg) leg.innerHTML = labels.map((l,i)=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;background:var(--surface2)">
+        <div style="width:12px;height:12px;border-radius:3px;background:${cols[i]};flex-shrink:0"></div>
+        <div>
+          <div style="font-size:18px;font-weight:800;color:var(--text)">${vals[i]}</div>
+          <div style="font-size:10px;color:var(--text-dim)">${l}</div>
+        </div>
+      </div>`).join('');
   }
+  const kpiForDonut = await api('/api/kpi');
+  buildTicketsDonut(kpiForDonut);
   // MTTR par secteur
   const rmt = await api('/api/incidents/par-secteur');
   if(rmt){
@@ -1160,36 +1191,9 @@ async function checkPauses() {
 }
 
 async function buildEscalade() {
-  const esc = await api('/api/incidents/escalade');
-  const list = document.getElementById('esc-list');
-  const cnt  = document.getElementById('esc-count');
-  if(!list) return;
-  if(!esc || !esc.length) {
-    if(cnt) cnt.textContent='';
-    list.innerHTML='<div style="color:var(--green);font-size:12px;padding:12px 0;text-align:center">✅ Aucun incident critique en attente de plus de 30 min</div>';
-    return;
-  }
-  if(cnt) cnt.textContent=`(${esc.length})`;
-  const fmtW=m=>m>=60?Math.floor(m/60)+'h'+String(Math.round(m%60)).padStart(2,'0'):Math.round(m)+'min';
-  list.innerHTML=esc.map(e=>`
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:5px;border-radius:7px;
-      background:rgba(255,60,110,0.07);
-      border:1px solid rgba(255,60,110,0.2)">
-      <div style="min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;font-weight:600;color:var(--red);display:flex;align-items:center;gap:5px">
-          ${e.code_incident}
-        </div>
-        <div style="font-size:10px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-          ${(e.type_incident||'').replace(/_/g,' ')} · ${e.secteur_nom||'—'}
-        </div>
-      </div>
-      <div style="text-align:right;flex-shrink:0;margin-left:8px">
-        <div style="font-size:10px;color:var(--red);font-weight:700">⏱ ${fmtW(e.minutes_attente)}</div>
-        <button onclick="goToIncidentMap(${e.id})"
-          style="margin-top:3px;padding:2px 8px;border-radius:5px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-family:var(--font-heading);font-size:9px;font-weight:600;cursor:pointer"
-          onmouseover="this.style.background='rgba(0,212,255,.12)'" onmouseout="this.style.background='transparent'">⚡ Dispatcher</button>
-      </div>
-    </div>`).join('');
+  // Rafraîchir le donut toutes les 2 minutes
+  const kd = await api('/api/kpi');
+  if(kd && typeof buildTicketsDonut === 'function') buildTicketsDonut(kd);
 }
 
 const C_OPTS = {
@@ -2129,7 +2133,7 @@ function renderGanttRows(techRows, dateStr){
       const durMin = (['COMPLETE','INCOMPLET'].includes(tk.statut_terrain) && tk.duree_min)
         ? tk.duree_min              // durée réelle mesurée en DB (tout inclus)
         : (tk.duree_totale_min      // estimée + pause cumulée (fourni par API)
-           || (tk.duree_estimee_min ? tk.duree_estimee_min + _pauseMin : 0)
+           || (tk.duree_estimee_min ? tk.duree_estimee_min : 0)  // déjà augmentée par la pause côté serveur
            || Math.round(_range.min + _rand * (_range.max - _range.min)));
 
       // Fin barre : jamais après 18h
