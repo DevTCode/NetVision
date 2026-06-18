@@ -789,7 +789,7 @@ async function loadTickets() {
 }
 
 function showTicketReprisePopup(tk, heure, minutesAvant) {
-  const sev = tk.severite||'—';
+  const sev = tk.severite||tk.inc_severite||'—';
   const sevColor = {CRITIQUE:'var(--red)',MAJEUR:'var(--amber)',MINEUR:'#ffcc00'}[sev]||'var(--accent)';
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)';
@@ -1594,7 +1594,7 @@ function showPausePanel() {
 
 function showNewTicketPopup(tk) {
   const fmtDur = m => m>=60?Math.floor(m/60)+'h'+(m%60>0?String(Math.round(m%60)).padStart(2,'0'):''):Math.round(m)+'min';
-  const sev = tk.severite||'—';
+  const sev = tk.severite||tk.inc_severite||'—';
   const sevColor = {CRITIQUE:'var(--red)',MAJEUR:'var(--amber)',MINEUR:'#ffcc00'}[sev]||'var(--accent)';
 
   const overlay = document.createElement('div');
