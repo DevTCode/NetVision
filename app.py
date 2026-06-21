@@ -79,6 +79,13 @@ def query_one(sql, params=None):
     r = cur.fetchone()
     return dict(r) if r else {}
 
+def pg_now():
+    """Heure locale Africa/Casablanca selon l'horloge PostgreSQL (pas Python).
+    Évite toute désynchronisation entre l'horloge du serveur Flask et celle
+    du serveur PostgreSQL — critique pour la logique J+1 et le Gantt."""
+    row = query_one("SELECT (NOW() AT TIME ZONE 'Africa/Casablanca') AS t")
+    return row.get("t")
+
 def execute(sql, params=None):
     db = get_db()
     cur = db.cursor()
@@ -135,6 +142,7 @@ def health():
 @app.route("/api/kpi")
 def kpi():
     try:
+        _fermer_retards_interne()  # rattrapage auto, peu importe l'heure d'accès
         inc = query_one("""
             SELECT
                 COUNT(*)                                                     AS total_incidents,
@@ -354,6 +362,7 @@ def incident_detail(inc_id):
 
 @app.route("/api/techniciens")
 def techniciens():
+    _fermer_retards_interne()  # rattrapage auto, peu importe l'heure d'accès
     secteur_id_filter = request.args.get("secteur_id")
     statut_filter = (request.args.get("statut") or "").upper().strip()
     sect_where = "AND t.secteur_id = %s" if secteur_id_filter else ""
@@ -431,6 +440,9 @@ def technicien_detail(tech_id):
         FROM fact_tickets WHERE technicien_id = %s
     """, (tech_id,))
     # Ticket actif courant — dériver le vrai statut
+    # IMPORTANT : exclure les tickets J+1 dont la date_assignation est future,
+    # sinon un technicien avec un ticket planifié pour demain serait considéré
+    # à tort comme EN_INTERVENTION aujourd'hui.
     tk_actif = query_one("""
         SELECT id, code_ticket, statut_terrain, date_assignation,
                COALESCE(duree_pause_min, 0) AS duree_pause_min
@@ -438,6 +450,7 @@ def technicien_detail(tech_id):
         WHERE technicien_id = %s
           AND (statut_terrain IS NULL
                OR statut_terrain NOT IN ('COMPLETE','INCOMPLET'))
+          AND date_assignation <= (NOW() AT TIME ZONE 'Africa/Casablanca')
         ORDER BY date_creation DESC LIMIT 1
     """, (tech_id,))
 
@@ -478,6 +491,7 @@ def technicien_detail(tech_id):
 
 @app.route("/api/carte")
 def carte():
+    _fermer_retards_interne()  # rattrapage auto, peu importe l'heure d'accès
     sects = query("SELECT * FROM dim_secteur")
     equips = query("""
         SELECT id, code, type, statut, secteur_id, latitude, longitude, nom, modele
@@ -581,7 +595,7 @@ def assigner_ticket():
         (float(tech["longitude"]) - float(inc["longitude"]))**2
     )**0.5), 1)
 
-    now = datetime.now()
+    now = pg_now()  # horloge PostgreSQL, pas Python
     duree_min = inc.get("duree_estimee_min") or 60
 
     # ── Vision : duree_estimee = tout inclus (trajet + intervention) ──
@@ -862,42 +876,49 @@ def tickets_incomplets():
 # ═══════════════════════════════════════════════════════════════
 @app.route("/api/gantt")
 def gantt():
-    date_param = request.args.get("date", date.today().isoformat())
+    _fermer_retards_interne()  # rattrapage auto, peu importe l'heure d'accès
+    # IMPORTANT : utiliser l'horloge PostgreSQL (pas Python) pour déterminer
+    # "aujourd'hui", car les deux peuvent être désynchronisées (ex: serveur
+    # PostgreSQL et machine Flask sur des hôtes/horloges différents).
+    pg_today_row = query_one("SELECT (NOW() AT TIME ZONE 'Africa/Casablanca')::DATE AS d")
+    pg_today = pg_today_row.get("d")  # objet date Python
+
+    date_param = request.args.get("date", pg_today.isoformat())
     try:
         gantt_date = date.fromisoformat(date_param)
     except:
-        gantt_date = date.today()
+        gantt_date = pg_today
     today = gantt_date.isoformat()
-    is_today = (gantt_date == date.today())
+    is_today = (gantt_date == pg_today)
 
     sid = request.args.get("secteur_id")
 
     if is_today:
-        # Aujourd'hui : tickets actifs (EN_ROUTE/SUR_SITE/EN_COURS/EN_PAUSE) peu importe la date
-        # + tickets assignés aujourd'hui (ASSIGNE / NULL)
-        # + tickets terminés aujourd'hui (COMPLETE/INCOMPLET)
-        # Exclure J+1 : statut NULL et date_assignation future
-        join_cond = """(
-                -- Tickets actifs (statut terrain réel)
-                tk.statut_terrain IN ('EN_ROUTE','SUR_SITE','EN_COURS','EN_PAUSE')
-                OR
-                -- Tickets ASSIGNE aujourd'hui seulement (exclure J+1 futurs)
-                ((tk.statut_terrain IS NULL OR tk.statut_terrain = 'ASSIGNE')
-                 AND tk.date_assignation <= (NOW() AT TIME ZONE 'Africa/Casablanca'))
-                OR
-                -- Tickets terminés aujourd'hui
-                (tk.statut_terrain IN ('COMPLETE','INCOMPLET')
-                 AND DATE(tk.date_fin_intervention) = %s)
-              )"""
+        # Le ticket appartient TOUJOURS au jour exact de sa date_assignation,
+        # quel que soit son statut actuel ou la date de clôture (même via
+        # clôture auto), pour éviter qu'un ticket J+1 d'hier resté actif
+        # ne réapparaisse à tort aujourd'hui.
+        join_cond = """DATE(tk.date_assignation) = %s
+                AND (
+                  tk.statut_terrain IN ('EN_ROUTE','SUR_SITE','EN_COURS','EN_PAUSE',
+                                         'COMPLETE','INCOMPLET')
+                  OR
+                  ((tk.statut_terrain IS NULL OR tk.statut_terrain = 'ASSIGNE')
+                   AND tk.date_assignation <= (NOW() AT TIME ZONE 'Africa/Casablanca'))
+                )"""
         q_params = [today]
     else:
-        join_cond = """tk.statut_terrain IN ('COMPLETE','INCOMPLET')
-              AND (
-                DATE(tk.date_assignation) = %s
-                OR DATE(COALESCE(tk.date_fin_intervention, tk.date_creation)) = %s
-                OR DATE(tk.date_creation) = %s
+        # Jour futur ou passé : tickets planifiés pour ce jour (ASSIGNE/NULL,
+        # typiquement les J+1 pas encore commencés) + tickets déjà terminés
+        # ce jour-là (COMPLETE/INCOMPLET)
+        join_cond = """(
+                ((tk.statut_terrain IS NULL OR tk.statut_terrain = 'ASSIGNE')
+                 AND DATE(tk.date_assignation) = %s)
+                OR
+                (tk.statut_terrain IN ('COMPLETE','INCOMPLET')
+                 AND DATE(tk.date_assignation) = %s)
               )"""
-        q_params = [today, today, today]
+        q_params = [today, today]
 
     if sid:
         q_params.append(int(sid))
@@ -1022,13 +1043,15 @@ def ticket_actif_technicien(tech_id):
 
     return ok(tk)
 
-@app.route("/api/tickets/fermer-retards", methods=["POST"])
-def fermer_tickets_retards():
-    """Ferme automatiquement les tickets dont la durée estimée est dépassée."""
-    now = datetime.now()
-    log.info(f"fermer-retards appelé à {now.strftime('%H:%M:%S')}")
+def _fermer_retards_interne():
+    """Ferme automatiquement les tickets dont la durée estimée est dépassée.
+    Fonction interne réutilisable, appelée systématiquement en tête des
+    endpoints critiques (gantt, kpi, carte, techniciens) afin que les
+    retards soient TOUJOURS rattrapés au premier accès, indépendamment
+    de l'heure à laquelle l'application est ouverte ou d'un quelconque
+    setInterval côté navigateur."""
+    now = pg_now()  # horloge PostgreSQL, pas Python
 
-    # Récupérer tous les tickets actifs non terminés
     candidats = query("""
         SELECT tk.id, tk.code_ticket, tk.technicien_id, tk.incident_id,
                tk.statut_terrain, tk.statut,
@@ -1043,9 +1066,6 @@ def fermer_tickets_retards():
           AND tk.date_assignation IS NOT NULL
     """)
 
-    log.info(f"fermer-retards: {len(candidats)} candidats actifs")
-
-    # Filtrer en Python : date_assignation + duree_estimee_min < now
     from datetime import timedelta
     from email.utils import parsedate_to_datetime as _prfc
 
@@ -1066,17 +1086,22 @@ def fermer_tickets_retards():
         duree = int(tk.get('duree_estimee_min') or 60)
         fin = da + timedelta(minutes=duree)
         if now > fin:
-            log.info(f"  → RETARD: {tk['code_ticket']} da={da} duree={duree}min fin={fin} now={now}")
             retards.append({**tk, '_da': da})
-        else:
-            log.info(f"  → OK: {tk['code_ticket']} fin={fin} (dans {int((fin-now).total_seconds()/60)}min)")
 
-    log.info(f"fermer-retards: {len(retards)} retard(s) détecté(s)")
+    if not retards:
+        return []
+
+    log.info(f"fermer-retards (auto): {len(retards)} retard(s) détecté(s)")
 
     fermes = []
     for tk in retards:
         da = tk['_da']
-        duree_reelle = max(1, int((now - da).total_seconds() / 60))
+        duree_estimee = int(tk.get('duree_estimee_min') or 60)
+        # Heure théorique de fin = quand le ticket aurait dû se terminer,
+        # PAS le moment où ce code s'exécute (qui peut être bien plus tard
+        # si personne n'a ouvert l'app entre temps).
+        fin_theorique = da + timedelta(minutes=duree_estimee)
+        duree_reelle = duree_estimee  # le ticket "dure" exactement sa durée estimée
 
         execute("""
             UPDATE fact_tickets
@@ -1087,7 +1112,7 @@ def fermer_tickets_retards():
                 duree_intervention_min = %s,
                 updated_by = 'SYSTEME'
             WHERE id = %s
-        """, (now, duree_reelle, tk["id"]))
+        """, (fin_theorique, duree_reelle, tk["id"]))
 
         execute("""
             UPDATE dim_technicien
@@ -1099,7 +1124,7 @@ def fermer_tickets_retards():
             INSERT INTO ticket_historique
             (ticket_id,code_ticket,statut_avant,statut_apres,cause,commentaire,updated_by,updated_at)
             VALUES (%s,%s,%s,'INCOMPLET','Durée dépassée','Clôture automatique par le système','SYSTEME',%s)
-        """, (tk["id"], tk["code_ticket"], tk.get("statut_terrain"), now))
+        """, (tk["id"], tk["code_ticket"], tk.get("statut_terrain"), fin_theorique))
 
         fermes.append({
             "ticket_id":   tk["id"],
@@ -1108,7 +1133,14 @@ def fermer_tickets_retards():
             "telephone":   tk.get("telephone"),
         })
 
-    log.info(f"fermer-retards: {len(fermes)} ticket(s) fermé(s)")
+    log.info(f"fermer-retards (auto): {len(fermes)} ticket(s) fermé(s)")
+    return fermes
+
+
+@app.route("/api/tickets/fermer-retards", methods=["POST"])
+def fermer_tickets_retards():
+    """Ferme automatiquement les tickets dont la durée estimée est dépassée."""
+    fermes = _fermer_retards_interne()
     return ok({"fermes": fermes, "count": len(fermes)})
 
 
@@ -1129,7 +1161,7 @@ def assigner_ticket_j1():
         (float(tech["latitude"]) - float(inc["latitude"]))**2 +
         (float(tech["longitude"]) - float(inc["longitude"]))**2
     )**0.5), 1)
-    now = datetime.now()
+    now = pg_now()  # horloge PostgreSQL, pas Python
     duree_min = inc.get("duree_estimee_min") or 60
     date_assignation = (now + timedelta(days=1)).replace(hour=9, minute=0, second=0, microsecond=0)
 
