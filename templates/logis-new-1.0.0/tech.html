@@ -645,22 +645,29 @@ async function refreshTechnicien() {
   // Charger tickets d'abord pour savoir si ticket actif est J+1
   await loadTickets();
 
-  // Statut affiché : EN_INTERVENTION si TECH.statut l'est, même si ticket actif non chargé
-  // On affiche DISPONIBLE seulement si TECH.statut est vraiment DISPONIBLE en DB
-  const statutAffiche = TECH.statut || 'DISPONIBLE';
+  // Statut affiché : on se base sur TICKET_ACTIF (calculé après masquage J+1)
+  // Si TICKET_ACTIF est null → technicien DISPONIBLE aujourd'hui
+  // même si TECH.statut en DB dit EN_INTERVENTION (ticket J+1 planifié pour demain)
+  const hasJ1 = document.querySelectorAll('#tickets-planifies-section .badge.PLANIFIE').length > 0
+             || (TECH.statut === 'EN_INTERVENTION' && !TICKET_ACTIF);
+  const statutAffiche = TICKET_ACTIF
+    ? (TICKET_ACTIF.statut_terrain === 'EN_PAUSE' ? 'EN_PAUSE' : 'EN_INTERVENTION')
+    : (TECH.statut === 'INDISPONIBLE' ? 'INDISPONIBLE' : 'DISPONIBLE');
 
-  banner.className = `statut-banner ${statutAffiche}`;
-  label.className  = `statut-label ${statutAffiche}`;
-  label.textContent = statutAffiche.replace('_',' ');
+  banner.className = `statut-banner ${statutAffiche === 'EN_PAUSE' ? 'EN_INTERVENTION' : statutAffiche}`;
+  label.className  = `statut-label ${statutAffiche === 'EN_PAUSE' ? 'EN_INTERVENTION' : statutAffiche}`;
+  label.textContent = statutAffiche === 'EN_PAUSE' ? 'EN PAUSE' : statutAffiche.replace('_',' ');
 
-  const icons = { DISPONIBLE:'✅', EN_INTERVENTION:'🔧', INDISPONIBLE:'😴' };
+  const icons = { DISPONIBLE:'✅', EN_INTERVENTION:'🔧', EN_PAUSE:'☕', INDISPONIBLE:'😴' };
   icon.textContent = icons[statutAffiche] || '—';
 
-  if(statutAffiche === 'EN_INTERVENTION' || TICKET_ACTIF) {
+  if(statutAffiche === 'EN_PAUSE') {
+    const code = TICKET_ACTIF ? TICKET_ACTIF.code_ticket : '';
+    sub.textContent = 'Pause en cours' + (code ? ' — ' + code : '');
+  } else if(statutAffiche === 'EN_INTERVENTION') {
     const code = TICKET_ACTIF ? TICKET_ACTIF.code_ticket : '';
     sub.textContent = 'Intervention en cours' + (code ? ' — ' + code : '') + ' — mettez à jour votre statut terrain';
   } else if(statutAffiche === 'DISPONIBLE') {
-    const hasJ1 = document.querySelectorAll('#tickets-planifies-section [style*="border"]').length > 0;
     sub.textContent = hasJ1
       ? 'Ticket planifié pour demain — disponible aujourd\'hui'
       : 'Aucun ticket actif — en attente d\'assignation';
@@ -714,8 +721,10 @@ async function loadTickets() {
   _prevTicketId = tkActif ? tkActif.id : null;
 
   // Si query OK → mettre à jour TICKET_ACTIF
-  // Si null et technicien EN_INTERVENTION → garder l'ancien TICKET_ACTIF (évite flash "aucun ticket")
-  if(tkActif !== null || TECH.statut !== 'EN_INTERVENTION') {
+  // Ne pas garder l'ancien ticket si le nouveau est null à cause du masquage J+1
+  // (le masquage J+1 est intentionnel — le technicien est disponible aujourd'hui)
+  const isJ1Masked = (actif && actif.id) && tkActif === null;
+  if(tkActif !== null || isJ1Masked || TECH.statut !== 'EN_INTERVENTION') {
     TICKET_ACTIF = tkActif;
   }
   renderTicketActif(TICKET_ACTIF);
@@ -944,6 +953,20 @@ function renderTicketActif(tk) {
                   <div class="tk-field">
             <div class="tk-label">Durée estimée</div>
             <div class="tk-value dur">${fmtDur(tk.duree_estimee_min)}</div>
+          </div>
+          <div class="tk-field">
+            <div class="tk-label">Fin estimée</div>
+            <div class="tk-value dur">${(()=>{
+              if(!tk.duree_estimee_min || !tk.date_assignation) return '—';
+              const s = String(tk.date_assignation);
+              const m = s.match(/T(\d{2}):(\d{2})/) || s.match(/(\d{2}):(\d{2}):\d/);
+              if(!m) return '—';
+              const startMin = parseInt(m[1])*60 + parseInt(m[2]);
+              const endMin = startMin + tk.duree_estimee_min;
+              const h = Math.floor((endMin % 1440) / 60);
+              const mi = endMin % 60;
+              return String(h).padStart(2,'0') + 'h' + String(mi).padStart(2,'0');
+            })()}</div>
           </div>
           <div class="tk-field">
             <div class="tk-label">Secteur</div>
@@ -1184,6 +1207,7 @@ function renderTicketsPlanifies(tickets) {
             <div style="display:flex;gap:14px;font-size:10px;color:var(--text-dim);flex-wrap:wrap">
               <span><i class="bi bi-calendar-event" style="color:var(--purple)"></i> Reprise : ${(()=>{const s=String(tk.date_assignation||'');const m=s.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);return m?m[3]+'/'+m[2]+'/'+m[1]+' à '+m[4]+':'+m[5]:'—';})()}</span>
               <span><i class="bi bi-hourglass"></i> ~${fmtDur(tk.duree_estimee_min)}</span>
+              <span><i class="bi bi-clock"></i> Fin est. : ${(()=>{const d=tk.duree_estimee_min||0;const e=9*60+d;return Math.floor(e/60)+'h'+String(e%60).padStart(2,'0');})()} </span>
               <span class="badge ${tk.severite}" style="font-size:8px">${tk.severite}</span>
             </div>
           </div>`).join('')}
