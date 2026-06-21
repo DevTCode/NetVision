@@ -971,7 +971,7 @@ function startGanttAutoRefresh() {
       showGanttPopup(ch, stColor);
     });
 
-  }, 10000); // toutes les 10 secondes
+  }, 2500); // toutes les 2.5 secondes
 }
 
 function stopGanttAutoRefresh() {
@@ -1598,12 +1598,6 @@ async function showIncIncompletDP(inc, skipFlyTo=false) {
       <div class="dp-val"><span class="badge ${inc.severite}">${inc.severite}</span></div>
     </div>
     <div class="dp-field"><div class="dp-label">Secteur</div><div class="dp-val">${sect}</div></div>
-    <div class="dp-field"><div class="dp-label">Cause bloquante</div>
-      <div class="dp-val" style="color:var(--red);font-size:12px;padding:8px;
-        background:rgba(255,60,110,0.06);border-radius:6px;border-left:2px solid var(--red)">
-        ${cause}
-      </div>
-    </div>
     <hr class="dp-sep">
     <button onclick="showDebloquerPopup(${inc.id},'${code}','${cause.replace(/'/g,"\'").slice(0,80)}')"
       style="width:100%;padding:11px;border-radius:9px;
@@ -1690,6 +1684,8 @@ async function confirmerDeblocage(incId) {
       `${res.code_incident} remis OUVERT — sélectionner un technicien`,
       'success');
     closeDP();
+    // Rafraîchir immédiatement le tableau des incidents (retire le ticket débloqué de la liste INCOMPLET)
+    await renderInc();
     // Ouvrir directement le panel dispatch
     setTimeout(async () => {
       const inc = await api(`/api/incidents/${incId}`);
@@ -1860,6 +1856,15 @@ function goToIncidentMap(id) {
 
     if(!MAP){ await initMap(); await new Promise(r=>setTimeout(r,400)); }
 
+    // Incident bloqué (INCOMPLET) → même comportement que clic direct sur la carte
+    if(detail.statut === 'INCOMPLET') {
+      const _fBtnInc = document.querySelector('.fmap-btn[onclick*="incomplet"]');
+      if(_fBtnInc) setMapFilter('incomplet', _fBtnInc);
+      MAP.setView([lat, lng], 17);
+      showIncIncompletDP({...detail, lat, lng}, true);
+      return;
+    }
+
     // Filtrer la carte sur la severite de cet incident — seuls ses pairs sont visibles
     const _sevF = {CRITIQUE:'critique', MAJEUR:'majeur', MINEUR:'mineur'}[detail.severite];
     if(_sevF) {
@@ -1918,21 +1923,28 @@ async function renderTech(){
 // ══════════════════════════════════════════════════════════════
 // GANTT — AUJOURD'HUI · depuis /api/gantt · 100% persistant
 // ══════════════════════════════════════════════════════════════
-function ganttToday(){ return new Date().toISOString().slice(0,10); }
-
+function ganttToday(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function _ganttFmtLocal(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 function ganttPrevDay(){
-  const d=new Date(document.getElementById('gantt-date').value+'T00:00:00');
+  const [y,m,day]=document.getElementById('gantt-date').value.split('-').map(Number);
+  const d=new Date(y,m-1,day);
   d.setDate(d.getDate()-1);
-  document.getElementById('gantt-date').value=d.toISOString().slice(0,10);
+  document.getElementById('gantt-date').value=_ganttFmtLocal(d);
   stopGanttAutoRefresh();
   renderGantt();
 }
 function ganttNextDay(){
-  const d=new Date(document.getElementById('gantt-date').value+'T00:00:00');
+  const [y,m,day]=document.getElementById('gantt-date').value.split('-').map(Number);
+  const d=new Date(y,m-1,day);
   const todayD=new Date(); todayD.setHours(0,0,0,0);
   if(d>=todayD) return;
   d.setDate(d.getDate()+1);
-  const newVal=d.toISOString().slice(0,10);
+  const newVal=_ganttFmtLocal(d);
   document.getElementById('gantt-date').value=newVal;
   renderGantt();
   if(newVal===ganttToday()) startGanttAutoRefresh();
@@ -1947,15 +1959,19 @@ async function renderGantt(){
   // Label
   const dateObj=new Date(dateStr+'T00:00:00');
   const days=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const yesterdayD=new Date(); yesterdayD.setDate(yesterdayD.getDate()-1);
+  const yesterdayStr=_ganttFmtLocal(yesterdayD);
   const label = dateStr===today ? '— Aujourd\'hui' :
-    dateStr===new Date(Date.now()-86400000).toISOString().slice(0,10) ? '— Hier' :
+    dateStr===yesterdayStr ? '— Hier' :
     '— '+days[dateObj.getDay()]+' '+dateObj.toLocaleDateString('fr-FR',{day:'numeric',month:'long'});
   document.getElementById('gantt-day-label').textContent=label;
 
   // Bloquer futur
   const nb=document.getElementById('gantt-next-btn');
-  nb.style.opacity=dateStr>=today?'0.3':'1';
-  nb.style.pointerEvents=dateStr>=today?'none':'auto';
+  // Permettre navigation jusqu'à J+1 (pour voir les tickets planifiés demain)
+  const tomorrow=(()=>{const d=new Date();d.setDate(d.getDate()+1);return _ganttFmtLocal(d);})();
+  nb.style.opacity=dateStr>=tomorrow?'0.3':'1';
+  nb.style.pointerEvents=dateStr>=tomorrow?'none':'auto';
 
   // Heures
   document.getElementById('g-hours').innerHTML=
@@ -1984,7 +2000,8 @@ async function renderGantt(){
       // Garder tous les tickets du jour — actifs ET terminés
       return true;
     }
-    return t.tickets.some(tk => ['COMPLETE','INCOMPLET'].includes(tk.statut_terrain));
+    // Jours futurs : inclure aussi les tickets ASSIGNE/planifiés
+    return t.tickets.some(tk => ['COMPLETE','INCOMPLET','ASSIGNE'].includes(tk.statut_terrain) || !tk.statut_terrain);
   });
 
   document.getElementById('gantt-ticket-count').textContent =
@@ -2057,14 +2074,10 @@ function renderGanttRows(techRows, dateStr){
         }
         return '—';
       })()}</span></div>
-      <div class="g-tooltip-row"><span class="g-tooltip-key">Durée estimée</span><span class="g-tooltip-val" style="color:var(--amber)">~${fmtDurTip(tk.duree_estimee_min||durMin)}</span></div>
+      <div class="g-tooltip-row"><span class="g-tooltip-key">Durée estimée</span><span class="g-tooltip-val" style="color:var(--amber)">~${fmtDurTip(tk.duree_estimee_min||0)}</span></div>
       ${(tk.duree_pause_min||0)>0?`
-      <div class="g-tooltip-row"><span class="g-tooltip-key">☕ Pause cumulée</span><span class="g-tooltip-val" style="color:#ff9500">+${fmtDurTip(tk.duree_pause_min)}</span></div>
-      <div class="g-tooltip-row" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:4px"><span class="g-tooltip-key" style="color:var(--text);font-weight:700">Durée totale</span><span class="g-tooltip-val" style="color:var(--amber);font-weight:700">${fmtDurTip((tk.duree_estimee_min||0)+(tk.duree_pause_min||0))}</span></div>
+      <div class="g-tooltip-row"><span class="g-tooltip-key">☕ Pause cumulée</span><span class="g-tooltip-val" style="color:#ff9500">+${fmtDurTip(tk.duree_pause_min)} → fin repoussée</span></div>
       `:''}
-      ${(tk.duree_pause_min||0)>0?`
-      <div class="g-tooltip-row"><span class="g-tooltip-key">☕ Pause prise</span><span class="g-tooltip-val" style="color:#ff9500">+${fmtDurTip(tk.duree_pause_min)} → fin repoussée</span></div>
-      <div class="g-tooltip-row"><span class="g-tooltip-key">Durée totale</span><span class="g-tooltip-val" style="color:var(--amber);font-weight:700">~${fmtDurTip((tk.duree_estimee_min||durMin)+(tk.duree_pause_min||0))}</span></div>`:''}
       ${tk.cause_incomplete?`<div style="margin-top:6px;padding:4px 8px;background:rgba(255,60,110,.1);border-left:2px solid #ff3c6e;border-radius:0 4px 4px 0;font-size:10px;color:#ff3c6e">⚠ ${tk.cause_incomplete}</div>`:''}
       ${tk._depasseJournee?'<div style="margin-top:5px;padding:3px 7px;background:rgba(255,165,0,0.1);border-radius:4px;font-size:9px;color:var(--amber)">⏰ Dépasse 17h → Reprise demain 8h</div>':''}
       <div style="margin-top:7px;font-size:9px;color:var(--text-dim)">Clic pour historique complet</div>`;
@@ -2087,10 +2100,15 @@ function renderGanttRows(techRows, dateStr){
     // Injecter le tel dans chaque ticket pour l'alerte retard
     t.tickets.forEach(tk => { tk.telephone = techPhone; });
 
-    // Statut technicien
-    const stColor={DISPONIBLE:'var(--green)',EN_INTERVENTION:'var(--amber)',INDISPONIBLE:'var(--text-dim)'}[t.statut]||'var(--text-dim)';
+    // Statut technicien — PLANIFIE = ticket J+1 planifié pour demain
+    const stColor={
+      DISPONIBLE:'var(--green)',
+      EN_INTERVENTION:'var(--amber)',
+      PLANIFIE:'var(--amber)',
+      INDISPONIBLE:'var(--text-dim)'
+    }[t.statut]||'var(--text-dim)';
     const stDot=`<span style="width:7px;height:7px;border-radius:50%;background:${stColor};box-shadow:0 0 5px ${stColor};display:inline-block;margin-right:5px;flex-shrink:0"></span>`;
-    const stLabel=t.statut==='EN_INTERVENTION'?'INTER':t.statut==='INDISPONIBLE'?'INDISPO':'DISPO';
+    const stLabel=t.statut==='EN_INTERVENTION'?'INTER':t.statut==='PLANIFIE'?'J+1':t.statut==='INDISPONIBLE'?'INDISPO':'DISPO';
     const stBadge=`<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:${stColor}18;color:${stColor};border:1px solid ${stColor}33;letter-spacing:0.5px">${stLabel}</span>`;
 
     // Barres tickets — avec gestion pause déjeuner
@@ -2126,99 +2144,96 @@ function renderGanttRows(techRows, dateStr){
       const _range = _durByType[tk.type_incident] || {min:60, max:120};
       // Ignorer duree_estimee_min de la DB si > 240 min (données incorrectes)
       // Durée barre : réelle si COMPLETE/INCOMPLET, sinon duree_estimee_min de la DB
-      // Durée : réelle si COMPLETE/INCOMPLET, estimée depuis DB sinon
-      // durMin = durée de base pour la barre
-      // Si ticket a eu une pause : utiliser duree_totale_min (estimée + pause cumulée)
+      // ── Calcul durée barre ──────────────────────────────────────────────────
+      // Utilitaire format durée
+      const _fmtDur = m => m >= 60
+        ? Math.floor(m/60)+'h'+(m%60>0?String(m%60).padStart(2,'0'):'')
+        : m+'min';
+
       const _pauseMin = tk.duree_pause_min || 0;
-      const durMin = (['COMPLETE','INCOMPLET'].includes(tk.statut_terrain) && tk.duree_min)
-        ? tk.duree_min              // durée réelle mesurée en DB (tout inclus)
-        : (tk.duree_totale_min      // estimée + pause cumulée (fourni par API)
-           || (tk.duree_estimee_min ? tk.duree_estimee_min : 0)  // déjà augmentée par la pause côté serveur
-           || Math.round(_range.min + _rand * (_range.max - _range.min)));
 
-      // Fin barre : jamais après 18h
-      const endMin = Math.min(DAY_E, startMin + Math.min(durMin, 480));
-      const depasseJournee = false; // ticket J+1 n'apparaît pas dans le Gantt d'aujourd'hui
+      // durée RÉELLE pour tickets fermés : date_fin - date_assignation
+      let _realDur = null;
+      if(['COMPLETE','INCOMPLET','FERME_AUTO'].includes(tk.statut_terrain)) {
+        if(tk.duree_min && tk.duree_min > 0) {
+          _realDur = tk.duree_min;
+        } else if(tk.date_assignation && tk.date_fin_intervention) {
+          const _m = Math.round((new Date(tk.date_fin_intervention) - new Date(tk.date_assignation)) / 60000);
+          if(_m > 0) _realDur = _m;
+        }
+        // fallback : duree_estimee_min
+        if(!_realDur) _realDur = tk.duree_estimee_min || Math.round(_range.min + _rand*(_range.max-_range.min));
+      }
 
-      // Barre simple et continue (pas de pause déjeuner à exclure)
+      // durMin = largeur de la barre
+      // - fermé → durée réelle calculée ci-dessus
+      // - actif → duree_estimee_min (déjà augmentée par la pause côté serveur)
+      const durMin = _realDur
+        ?? (tk.duree_estimee_min || Math.round(_range.min + _rand*(_range.max-_range.min)));
+
+      const depasseJournee = false;
       const segments = [{s: startMin, e: Math.min(DAY_E, startMin + durMin)}];
-
-      // Marquer pour tooltip
       tk._depasseJournee = depasseJournee;
 
-      // Statut NULL ou ASSIGNE = planifié → barre mauve
+      // ── ASSIGNE / NULL → barre mauve planifiée ──────────────────────────────
       if(!tk.statut_terrain || tk.statut_terrain === 'ASSIGNE') {
         if(!tk.date_assignation) return '';
         const startDtNull = new Date(tk.date_assignation);
         let sMinNull = startDtNull.getHours()*60+startDtNull.getMinutes();
         if(sMinNull < DAY_S || sMinNull >= DAY_E) sMinNull = DAY_S;
         const lNull = pct(sMinNull);
-        const wNull = Math.max(2, (Math.min(tk.duree_estimee_min||60, 240))/DUR*100);
+        const wNull = Math.max(2, (Math.min(tk.duree_estimee_min||60, 480))/DUR*100);
         return `<div class="g-seg PLANIFIE" data-tkid="${tk.ticket_id}" data-code="${tk.code_ticket}"
           style="position:absolute;height:22px;top:4px;left:${lNull}%;width:${wNull}%;z-index:3;
           display:flex;align-items:center;padding:0 7px;white-space:nowrap;overflow:hidden">
           📋 ${tk.code_ticket||'Assigné'}
         </div>`;
       }
-      // EN_PAUSE → barre orange pulsante — largeur = duree_totale (estimée + pause)
+
+      // ── EN_PAUSE → barre orange pulsante ────────────────────────────────────
+      // Largeur = duree_estimee_min (déjà augmentée côté serveur lors de la reprise)
       if(tk.statut_terrain === 'EN_PAUSE') {
-        const pauseMin  = tk.duree_pause_min  || 0;
-        const totalMin  = tk.duree_totale_min || (durMin + pauseMin);
+        const estMin = tk.duree_estimee_min || durMin;
         const left  = pct(startMin);
-        const w     = Math.max(2, Math.min(totalMin, 480) / DUR * 100);
-        const fmtP  = m => m >= 60
-          ? Math.floor(m/60)+'h'+(m%60>0?String(m%60).padStart(2,'0'):'')
-          : m+'min';
+        const w     = Math.max(2, Math.min(estMin, 480) / DUR * 100);
         return `<div class="g-seg EN_PAUSE" data-tkid="${tk.ticket_id}" data-code="${tk.code_ticket}"
           style="position:absolute;height:22px;top:4px;left:${left}%;width:${w}%;z-index:3;
           border-radius:5px;display:flex;align-items:center;padding:0 9px;
           white-space:nowrap;overflow:hidden">
           <span style="margin-right:4px">☕</span>
           <span style="overflow:hidden;text-overflow:ellipsis;flex:1">${tk.code_ticket}</span>
-          ${pauseMin > 0 ? `<span style="opacity:0.75;font-size:8px;margin-left:4px">+${fmtP(pauseMin)}</span>` : ''}
-          <span style="opacity:0.75;font-size:8px;margin-left:4px">= ${fmtP(totalMin)}</span>
+          ${_pauseMin>0?`<span style="opacity:0.75;font-size:8px;margin-left:4px">+${_fmtDur(_pauseMin)}</span>`:''}
+          <span style="opacity:0.75;font-size:8px;margin-left:6px">~${_fmtDur(estMin)}</span>
         </div>`;
       }
 
-      // EN_ROUTE, SUR_SITE, EN_COURS, COMPLETE, INCOMPLET → affichés
-
+      // ── EN_ROUTE, SUR_SITE, EN_COURS, COMPLETE, INCOMPLET ───────────────────
       const id_attr=`data-tkid="${tk.ticket_id}" data-code="${tk.code_ticket}"`;
 
       return segments.map((seg,si)=>{
         const left=pct(seg.s);
         const w=Math.max(1.5,(seg.e-seg.s)/DUR*100);
         const isFirst=si===0;
-        // Durée allongée si pause prise
-        const _pauseMin = tk.duree_pause_min || 0;
-        const _durAffiche = durMin + _pauseMin;
-        // Durée formatée h:mm
-        // Durée réelle : depuis date_assignation (vision : duree = tout inclus)
-        let _rawDur = tk.duree_min;
-        if(!_rawDur && ['COMPLETE','INCOMPLET'].includes(tk.statut_terrain) && tk.date_fin_intervention) {
-          const _d1 = new Date(tk.date_assignation); // depuis assignation = tout inclus
-          const _d2 = new Date(tk.date_fin_intervention);
-          const _m = Math.round((_d2-_d1)/60000);
-          if(_m>0) _rawDur = _m;
+
+        // Label durée dans la barre :
+        // - fermé → durée réelle (sans ~)
+        // - actif avec pause → ~estimée  ☕+pause
+        // - actif sans pause → ~estimée
+        let durStr = '';
+        if(['COMPLETE','INCOMPLET','FERME_AUTO'].includes(tk.statut_terrain)) {
+          // durée réelle connue
+          durStr = _realDur ? _fmtDur(_realDur) : '';
+        } else {
+          // actif : estimée uniquement
+          const _est = tk.duree_estimee_min || 0;
+          if(_est > 0) {
+            durStr = '~' + _fmtDur(_est);
+            if(_pauseMin > 0) durStr += ' ☕+' + _fmtDur(_pauseMin);
+          }
         }
-        if(!_rawDur) _rawDur = tk.duree_estimee_min || 0;
-        // Durée affichée = estimée + pause cumulée si applicable
-        const _pauseMinBar = tk.duree_pause_min || 0;
-        const _durBase  = _rawDur || 0;
-        const _durTotal = _durBase + _pauseMinBar;  // nouvelle durée totale
-        const isEstime  = !tk.duree_min && !!tk.duree_estimee_min;
-        const _fmtDurBar = m => m >= 60
-          ? Math.floor(m/60)+'h'+(m%60>0?String(m%60).padStart(2,'0'):'')
-          : m+'min';
-        // Afficher : durée_totale si pause, sinon durée seule
-        const _isEstimeBase = isEstime;
-        const durStr = _durTotal > 0
-          ? (_pauseMinBar > 0
-              ? (_isEstimeBase ? '~' : '') + _fmtDurBar(_durTotal) + ' (☕+' + _fmtDurBar(_pauseMinBar) + ')'
-              : (_isEstimeBase ? '~' : '') + _fmtDurBar(_durBase))
-          : '';
+
         const icon = tk.statut_terrain==='INCOMPLET'?'⚠':tk.statut_terrain==='COMPLETE'?'✓':'';
         const radius = segments.length>1?(isFirst?'5px 0 0 5px':'0 5px 5px 0'):'5px';
-        // Label principal = libelle tronqué
         const libelle = tk.incident_libelle ? tk.incident_libelle.split(' ').slice(0,2).join(' ') : tk.code_ticket||'';
         const j1Label = depasseJournee && si===0 ? `<span style="font-size:8px;opacity:0.8;margin-left:4px;background:rgba(255,165,0,0.3);padding:1px 4px;border-radius:3px">→J+1</span>` : '';
         return `<div class="g-seg ${tk.statut_terrain}" ${id_attr}
@@ -2295,7 +2310,7 @@ function renderGanttRows(techRows, dateStr){
     return `<div class="gantt-row" style="${rowOpacity}">
       <div class="gantt-lbl">
         <div class="glbl-name" style="display:flex;align-items:center;gap:5px">
-          ${stDot}<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.nom||'—'}</span>
+          <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.nom||'—'}</span>
         </div>
         <div class="glbl-mat" style="margin-top:2px">${t.matricule||'—'} · ${(t.secteur_nom||'').split(' ')[0]}</div>
         ${telBtn}
@@ -2534,8 +2549,8 @@ async function refreshKPI() {
   const tauxEl = document.getElementById('k-taux');
   if(tauxEl) tauxEl.textContent = kpi.taux_resolution_pct != null ? kpi.taux_resolution_pct+'%' : '—';
 }
-// Rafraîchir toutes les 15s
-setInterval(refreshKPI, 15000);
+// Rafraîchir toutes les 3s
+setInterval(refreshKPI, 3000);
 
 // ══ POPUP J+1 ══
 function showJ1ConfirmPopup(res, inc, tech) {
@@ -2658,10 +2673,10 @@ async function runFermerRetards() {
     await buildMapLayers();
   }
 }
-setInterval(runFermerRetards,30000);
-setTimeout(runFermerRetards,5000);
+setInterval(runFermerRetards,3000);
+setTimeout(runFermerRetards,1000);
 setInterval(buildEscalade,120000);
-setInterval(refreshKPI,15000);
+setInterval(refreshKPI,3000);
 
 window.addEventListener('load', async () => {
   const health=await api('/api/health');
