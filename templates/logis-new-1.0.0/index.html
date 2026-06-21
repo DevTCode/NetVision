@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>NetVision — Plateforme de Supervision Réseau</title>
+  <title>NetVision</title>
   <meta name="description" content="Plateforme BI de supervision et de pilotage des infrastructures télécom Huawei">
 
   <!-- Fonts -->
@@ -171,7 +171,7 @@
                     <div class="map-dot" style="background:#00c864;top:30%;left:35%;animation-delay:.8s"></div>
                     <div class="map-dot" style="background:#ffa500;top:70%;left:42%;animation-delay:1.2s"></div>
                   </div>
-                  <span class="map-label"><i class="bi bi-map me-1"></i>Carte réseau — Maroc</span>
+                  <span class="map-label"><i class="bi bi-map me-1"></i>Carte réseau : Maroc</span>
                 </div>
               </div>
 
@@ -201,7 +201,7 @@
               <div class="feat-icon cyan"><i class="bi bi-lightning-charge-fill"></i></div>
               <div>
                 <h4>Supervision en temps réel</h4>
-                <p>Surveillance continue des équipements Huawei — BTS 2G/3G/4G, routeurs, OLT, antennes — avec alertes et KPI mis à jour toutes les 15 secondes.</p>
+                <p>Surveillance continue des équipements Huawei : BTS 2G/3G/4G, routeurs, OLT, antennes avec alertes et KPI mis à jour toutes les 3 secondes.</p>
               </div>
             </div>
           </div>
@@ -211,7 +211,7 @@
               <div class="feat-icon red"><i class="bi bi-geo-alt-fill"></i></div>
               <div>
                 <h4>Dispatch intelligent</h4>
-                <p>Assignation du technicien par compétence, secteur géographique et note de performance — avec notification popup instantanée côté terrain.</p>
+                <p>Assignation du technicien par compétence, secteur géographique et note de performance avec report automatique au lendemain (J+1, 09h00) si fin estimée après 18h, et redispatch des incidents bloqués (INCOMPLET).</p>
               </div>
             </div>
           </div>
@@ -265,6 +265,14 @@
                 <p>Dashboard NOC admin avec carte, Gantt et dispatch — Interface terrain technicien avec tickets, statuts et historique.</p>
               </div>
             </div>
+
+            <div class="about-feature">
+              <div class="about-feature-icon"><i class="bi bi-clock-history"></i></div>
+              <div>
+                <h5>Clôture automatique</h5>
+                <p>Détection toutes les 3s des tickets en dépassement de durée, fermeture automatique et libération du technicien, avec notification immédiate côté NOC.</p>
+              </div>
+            </div>
           </div>
 
           <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
@@ -299,7 +307,7 @@
                   <div class="schema-step-icon s4"><i class="bi bi-server"></i></div>
                   <div>
                     <div class="schema-step-label">API Flask</div>
-                    <div class="schema-step-sub">25+ endpoints REST · JSON · CORS · Flask</div>
+                    <div class="schema-step-sub">31 endpoints REST · JSON · CORS · Flask</div>
                   </div>
                 </div>
                 <div class="schema-arrow"><i class="bi bi-arrow-down"></i></div>
@@ -332,12 +340,12 @@
 
           <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
             <div class="module-card">
-              <div class="mc-icon" style="background:rgba(0,212,255,0.1);color:var(--accent-color);border:1px solid rgba(0,212,255,0.2)">
+              <div class="mc-icon" style="background:rgba(0,212,255,0.1);color:#79cedd;border:1px solid rgba(255,60,110,0.2);border:1px solid rgba(0,212,255,0.2)">
                 <i class="bi bi-speedometer2"></i>
               </div>
               <h3>Dashboard Global</h3>
-              <p>KPI réseau temps réel — incidents ouverts, critiques, en cours de maintenance, techniciens disponibles, MTTR moyen. Refresh automatique toutes les 15s.</p>
-              <span class="mc-tag" style="background:rgba(0,212,255,0.08);color:var(--accent-color)">NOC Employé</span>
+              <p>KPI réseau temps réel : incidents ouverts, critiques, en cours de maintenance, techniciens disponibles, MTTR moyen. Refresh automatique toutes les 15s.</p>
+              <span class="mc-tag" style="background:rgba(0,212,255,0.08);color:#74d0f7;border:1px solid rgba(255,60,110,0.2)">NOC Employé</span>
             </div>
           </div>
 
@@ -347,7 +355,7 @@
                 <i class="bi bi-map-fill"></i>
               </div>
               <h3>Carte Géographique</h3>
-              <p>Carte interactive Leaflet.js — 120 équipements Huawei, incidents OUVERT et EN_COURS, 30 techniciens géolocalisés sur 10 secteurs. Dispatch direct depuis la carte.</p>
+              <p>Carte interactive Leaflet.js : 120 équipements Huawei, incidents OUVERT et EN_COURS, 30 techniciens géolocalisés sur 10 secteurs. Dispatch direct depuis la carte.</p>
               <span class="mc-tag" style="background:rgba(255,60,110,0.08);color:#ff3c6e">Leaflet + OpenStreetMap</span>
             </div>
           </div>
@@ -358,7 +366,7 @@
                 <i class="bi bi-exclamation-triangle-fill"></i>
               </div>
               <h3>Gestion Incidents</h3>
-              <p>Liste filtrée par sévérité (CRITIQUE/MAJEUR/MINEUR), statut et secteur. Types : PANNE_COMPLETE, COUPURE_FIBRE, INTERFERENCE, ALARME_RESEAU, MISE_A_JOUR, SURCHARGE, DEGRADATION.</p>
+              <p>Liste filtrée par sévérité (CRITIQUE/MAJEUR/MINEUR), statut et secteur. Types : PANNE_COMPLETE, PANNE_ALIM, COUPURE_FIBRE, INTERFERENCE, ALARME_RESEAU, MISE_A_JOUR, SURCHARGE, DEGRADATION.</p>
               <span class="mc-tag" style="background:rgba(255,165,0,0.08);color:#ffa500">BTS · Fibre · IP · RF</span>
             </div>
           </div>
@@ -369,8 +377,8 @@
                 <i class="bi bi-ticket-detailed-fill"></i>
               </div>
               <h3>Système de Tickets</h3>
-              <p>Création à l'assignation, cycle terrain : NULL → EN_ROUTE → SUR_SITE → EN_COURS → COMPLETE/INCOMPLET. Fermeture automatique si durée estimée dépassée.</p>
-              <span class="mc-tag" style="background:rgba(130,80,255,0.08);color:#8250ff">Cycle complet terrain</span>
+              <p>Création à l'assignation, cycle terrain : EN_ROUTE → SUR_SITE → EN_COURS → COMPLETE/INCOMPLET, avec pause terrain (1x max, 15-30 min) et clôture auto si durée dépassée. Historique complet par ticket (timeline).</p>
+              <span class="mc-tag" style="background:rgba(130,80,255,0.08);color:#8250ff">Pause · Clôture auto · Historique</span>
             </div>
           </div>
 
@@ -380,7 +388,7 @@
                 <i class="bi bi-people-fill"></i>
               </div>
               <h3>Gestion Techniciens</h3>
-              <p>30 techniciens avec compétences (RF, FIBRE, ALIMENTATION, RESEAU_IP…), disponibilité temps réel, note de performance, secteur d'affectation.</p>
+              <p>30 techniciens avec compétences (2G/3G, 4G/LTE, 5G, Fibre, Routage IP, Maintenance BTS, Optique), disponibilité temps réel, note de performance, secteur d'affectation.</p>
               <span class="mc-tag" style="background:rgba(0,200,100,0.08);color:#00c864">Terrain</span>
             </div>
           </div>
@@ -407,7 +415,7 @@
         <div class="cta-box" data-aos="zoom-in">
           <div class="section-tag">Accès plateforme</div>
           <h2>Prêt à superviser<br>votre réseau ?</h2>
-          <p>Connectez-vous à votre espace de travail — NOC employé ou technicien terrain — et prenez le contrôle de vos infrastructures télécom.</p>
+          <p>Connectez-vous à votre espace de travail : NOC employé ou technicien terrain et prenez le contrôle de vos infrastructures télécom.</p>
           <div class="d-flex gap-3 justify-content-center flex-wrap">
             <a href="noc_admin.html" class="btn-primary-custom" style="color: white;">
               <i class="bi bi-person-badge" style="color: white;"></i>
@@ -438,13 +446,14 @@
             <div class="role-card featured-role">
               <div class="role-badge emp"><i class="bi bi-building"></i> NOC Employé</div>
               <h3>Centre Opérationnel Réseau</h3>
-              <p>Pilotage global de l'infrastructure — supervision en temps réel, dispatch des techniciens, suivi des tickets et analyse des KPI réseau.</p>
+              <p>Pilotage global de l'infrastructure : supervision en temps réel, dispatch des techniciens, suivi des tickets et analyse des KPI réseau.</p>
               <ul class="role-features">
                 <li><i class="bi bi-check-circle-fill"></i> Dashboard KPI global temps réel</li>
                 <li><i class="bi bi-check-circle-fill"></i> Carte interactive incidents + techniciens</li>
                 <li><i class="bi bi-check-circle-fill"></i> Dispatch intelligent par proximité</li>
                 <li><i class="bi bi-check-circle-fill"></i> Popups temps réel changements statut</li>
                 <li><i class="bi bi-check-circle-fill"></i> Gantt journalier + historique + export Excel</li>
+                <li><i class="bi bi-check-circle-fill"></i> Redispatch des incidents bloqués (INCOMPLET)</li>
                 <li><i class="bi bi-check-circle-fill"></i> Bouton appel technicien si retard</li>
               </ul>
               <a href="login.html" class="role-login-btn emp-btn" style="color: white;">
@@ -458,18 +467,19 @@
             <div class="role-card">
               <div class="role-badge tech"><i class="bi bi-tools"></i> Technicien Terrain</div>
               <h3>Interface Terrain</h3>
-              <p>Gestion des tickets assignés — mise à jour du statut en temps réel, signalement de retards ou blocages, rapport d'intervention.</p>
+              <p>Gestion des tickets assignés : mise à jour du statut en temps réel, signalement de retards ou blocages, rapport d'intervention.</p>
               <ul class="role-features">
                 <li><i class="bi bi-check-circle-fill"></i> Mes tickets assignés</li>
                 <li><i class="bi bi-check-circle-fill"></i> Mise à jour statut EN_ROUTE → SUR_SITE → EN_COURS</li>
                 <li><i class="bi bi-check-circle-fill"></i> Popup notification nouveau ticket assigné</li>
+                <li><i class="bi bi-check-circle-fill"></i> Pause terrain avec décompte (1x par ticket, 15-30 min)</li>
                 <li><i class="bi bi-check-circle-fill"></i> Actions bloquées si durée dépassée</li>
                 <li><i class="bi bi-check-circle-fill"></i> Clôture COMPLETE ou INCOMPLET avec cause</li>
                 <li><i class="bi bi-check-circle-fill"></i> Historique de mes interventions</li>
               </ul>
               <a href="login.html" class="role-login-btn tech-btn">
                 <i class="bi bi-box-arrow-in-right"></i>
-                Se connecter — Technicien
+                Se connecter : Technicien
               </a>
             </div>
           </div>
@@ -501,7 +511,7 @@
                   <i class="faq-toggle bi bi-chevron-right"></i>
                 </h3>
                 <div class="faq-content">
-                  <p>L'admin NOC sélectionne l'incident et clique sur Dispatch. Le système trie les techniciens disponibles par : compétence correspondant au type d'incident (RF, FIBRE, ALIMENTATION...), même secteur géographique, meilleure note de performance, puis distance. Le premier de la liste reçoit un badge "★ Meilleur".</p>
+                  <p>L'admin NOC sélectionne l'incident et clique sur Dispatch. Le système trie les techniciens disponibles par : compétence correspondant au type d'incident (2G/3G, 4G/LTE, 5G, Fibre, Routage IP...), même secteur géographique, meilleure note de performance, puis distance. Le premier de la liste reçoit un badge "★ Meilleur". Si la fin estimée de l'intervention dépasse 18h00, l'assignation est reportée au lendemain (J+1, 09h00).</p>
                 </div>
               </div>
 
@@ -534,7 +544,7 @@
                   <i class="faq-toggle bi bi-chevron-right"></i>
                 </h3>
                 <div class="faq-content">
-                  <p>Incidents ouverts et critiques (décrémentés à la résolution), techniciens disponibles, tickets actifs, MTTR moyen, durée estimée moyenne. Les KPI sont recalculés en temps réel depuis PostgreSQL toutes les 15 secondes.</p>
+                  <p>Incidents ouverts et critiques (décrémentés à la résolution), techniciens disponibles, tickets actifs, MTTR moyen, durée estimée moyenne. Les KPI sont recalculés en temps réel depuis PostgreSQL toutes les 3 secondes. En parallèle, un job vérifie toutes les 3 secondes les tickets en dépassement de durée pour les clôturer automatiquement.</p>
                 </div>
               </div>
 
@@ -603,7 +613,7 @@
     </div>
 
     <div class="container copyright text-center mt-4">
-      <p>© 2026 <strong class="sitename">Net<span>Vision</span></strong> — Plateforme de Supervision Réseau Huawei</p>
+      <p>© 2026 <strong class="sitename">Net<span>Vision</span></strong> Plateforme de Supervision Réseau Huawei</p>
     </div>
   </footer>
 
