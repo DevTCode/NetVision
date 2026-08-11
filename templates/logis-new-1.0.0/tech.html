@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NetVision — Espace Technicien</title>
+<title>NetVision : Espace Technicien</title>
 
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
@@ -471,22 +471,11 @@ body::before {
       <div class="statut-icon" id="statut-icon">✅</div>
       <div>
         <div class="statut-label DISPONIBLE" id="statut-label">DISPONIBLE</div>
-        <div class="statut-sub" id="statut-sub">Aucun ticket actif — en attente d'assignation</div>
+        <div class="statut-sub" id="statut-sub">Aucun ticket actif · en attente d'assignation</div>
       </div>
     </div>
 
-    <!-- Bouton changer en bas du banner -->
-    <div style="display:flex;justify-content:flex-end">
-      <button onclick="changerTechnicien()"
-        style="display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;
-        border:1px solid rgba(255,165,0,0.3);background:rgba(255,165,0,0.06);
-        color:var(--amber);font-family:var(--font-heading);font-size:11px;font-weight:500;
-        cursor:pointer;transition:all .2s"
-        onmouseover="this.style.background='rgba(255,165,0,0.12)'"
-        onmouseout="this.style.background='rgba(255,165,0,0.06)'">
-        <i class="bi bi-person-fill-gear"></i> Changer de technicien
-      </button>
-    </div>
+ 
 
     <!-- Ticket actif -->
     <div id="ticket-actif-section"></div>
@@ -663,14 +652,14 @@ async function refreshTechnicien() {
 
   if(statutAffiche === 'EN_PAUSE') {
     const code = TICKET_ACTIF ? TICKET_ACTIF.code_ticket : '';
-    sub.textContent = 'Pause en cours' + (code ? ' — ' + code : '');
+    sub.textContent = 'Pause en cours' + (code ? ' · ' + code : '');
   } else if(statutAffiche === 'EN_INTERVENTION') {
     const code = TICKET_ACTIF ? TICKET_ACTIF.code_ticket : '';
-    sub.textContent = 'Intervention en cours' + (code ? ' — ' + code : '') + ' — mettez à jour votre statut terrain';
+    sub.textContent = 'Intervention en cours' + (code ? ' · ' + code : '') + ' · mettez à jour votre statut terrain';
   } else if(statutAffiche === 'DISPONIBLE') {
     sub.textContent = hasJ1
-      ? 'Ticket planifié pour demain — disponible aujourd\'hui'
-      : 'Aucun ticket actif — en attente d\'assignation';
+      ? 'Ticket planifié pour demain · disponible aujourd\'hui'
+      : 'Aucun ticket actif · en attente d\'assignation';
   } else {
     sub.textContent = TECH.raison_indisponibilite || 'Indisponible';
   }
@@ -826,7 +815,7 @@ function showTicketReprisePopup(tk, heure, minutesAvant) {
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);font-size:11px;color:var(--text-dim)">${tk.incident_libelle||'—'}</div>
       </div>
       <button onclick="this.closest('[style*=fixed]').remove()" style="padding:11px 28px;border-radius:9px;border:1px solid var(--green);background:rgba(0,200,100,0.1);color:var(--green);font-family:var(--font-heading);font-size:12px;font-weight:700;cursor:pointer">
-        ✓ Compris — Je me prépare
+        ✓ Compris · Je me prépare
       </button>
     </div>`;
   document.body.appendChild(overlay);
@@ -924,10 +913,9 @@ function renderTicketActif(tk) {
 
       <div id="pause-banner-slot"></div>
 
-      <div class="ticket-card ${tk.severite}" id="ticket-card-wrap">
+      <div class="ticket-card ${tk.severite||tk.inc_severite||''}" id="ticket-card-wrap">
         <div class="tk-header">
           <span class="tk-code">${tk.code_ticket}</span>
-          <span class="badge ${tk.severite}">${tk.severite}</span>
         </div>
 
         <div class="tk-body">
@@ -1006,14 +994,14 @@ function renderTicketActif(tk) {
           border:1px solid rgba(255,60,110,0.2);border-radius:10px;
           font-family:var(--font-heading);font-size:12px;color:var(--red)">
           <i class="bi bi-lock-fill" style="font-size:18px;display:block;margin-bottom:6px"></i>
-          Actions bloquées — durée dépassée<br>
+          Actions bloquées · durée dépassée<br>
           <span style="color:var(--text-dim);font-size:11px;font-weight:400">Le NOC doit clôturer ou réassigner ce ticket</span>
         </div>` : `
 
         <!-- Étape 1 : Départ -->
         ${!tk.statut_terrain || tk.statut_terrain==='ASSIGNE' ? `
         <div style="font-family:var(--font-heading);font-size:10px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">
-          Étape 1 — Départ vers le site
+          Étape 1 : Départ vers le site
         </div>
         <div class="actions-grid">
           <button class="btn-statut EN_ROUTE" onclick="updateStatut(${tk.id},'EN_ROUTE')">
@@ -1026,7 +1014,7 @@ function renderTicketActif(tk) {
 
         ${tk.statut_terrain==='EN_ROUTE' ? `
         <div style="font-family:var(--font-heading);font-size:10px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">
-          Étape 2 — Arrivée sur site
+          Étape 2 : Arrivée sur site
         </div>
         <button class="btn-statut SUR_SITE" style="width:100%" onclick="updateStatut(${tk.id},'SUR_SITE')">
           <i class="bi bi-geo-alt-fill"></i> Je suis arrivé sur site
@@ -1034,7 +1022,7 @@ function renderTicketActif(tk) {
 
         ${tk.statut_terrain==='SUR_SITE' ? `
         <div style="font-family:var(--font-heading);font-size:10px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">
-          Étape 3 — Intervention
+          Étape 3 : Intervention
         </div>
         <button class="btn-statut EN_COURS" style="width:100%" onclick="updateStatut(${tk.id},'EN_COURS')">
           <i class="bi bi-tools"></i> Je commence l'intervention
@@ -1042,7 +1030,7 @@ function renderTicketActif(tk) {
 
         ${tk.statut_terrain==='EN_COURS' ? `
         <div style="font-family:var(--font-heading);font-size:10px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">
-          Étape 4 — Clôture
+          Étape 4 : Clôture
         </div>
         <div class="actions-grid">
           <button class="btn-statut COMPLETE" onclick="showNoteForm(${tk.id})">
@@ -1059,7 +1047,7 @@ function renderTicketActif(tk) {
 
         ${['COMPLETE','INCOMPLET'].includes(tk.statut_terrain) ? `
         <div style="text-align:center;padding:10px;background:${tk.statut_terrain==='COMPLETE'?'rgba(0,200,100,.08)':'rgba(255,60,110,.08)'};border-radius:8px;font-family:var(--font-heading);font-size:12px;color:${tk.statut_terrain==='COMPLETE'?'var(--green)':'var(--red)'}">
-          ${tk.statut_terrain==='COMPLETE'?'✅ Intervention clôturée avec succès':'⚠ Intervention clôturée — incomplet'}
+          ${tk.statut_terrain==='COMPLETE'?'✅ Intervention clôturée avec succès':'⚠ Intervention clôturée · incomplet'}
         </div>` : ''}
 
         <!-- Incomplet toujours accessible si pas clôturé -->
@@ -1076,14 +1064,14 @@ function renderTicketActif(tk) {
           <label><i class="bi bi-exclamation-triangle-fill"></i> Cause obligatoire</label>
           <select class="cause-select" id="cause-select-${tk.id}">
             <option>Pièce de rechange manquante</option>
-            <option>Accès site sécurisé — autorisation requise</option>
+            <option>Accès site sécurisé : autorisation requise</option>
             <option>Problème plus grave que prévu</option>
             <option>Conditions météorologiques défavorables</option>
             <option>Équipement nécessite remplacement complet</option>
-            <option>Compétence spécialisée requise — escalade niveau 2</option>
-            <option>Client absent — accès site impossible</option>
-            <option>Coupure alimentation — attente ONEE</option>
-            <option>Route bloquée — site inaccessible</option>
+            <option>Compétence spécialisée requise : escalade niveau 2</option>
+            <option>Client absent : accès site impossible</option>
+            <option>Coupure alimentation : attente ONEE</option>
+            <option>Route bloquée : site inaccessible</option>
             <option>Autre (préciser ci-dessous)</option>
           </select>
           <textarea class="cause-textarea" id="cause-note-${tk.id}" placeholder="Détails supplémentaires..."></textarea>
@@ -1320,7 +1308,7 @@ async function submitCause(tkId) {
     method:'PATCH',
     body: JSON.stringify({
       statut_terrain:'INCOMPLET',
-      cause_incomplete: cause + (note ? ` — ${note}` : ''),
+      cause_incomplete: cause + (note ? ` : ${note}` : ''),
       updated_by:'TECHNICIEN'
     })
   });
@@ -1390,13 +1378,19 @@ async function loadHistorique() {
     return s.slice(0,16);
   };
   const fmtDur = min => min ? (Math.floor(min/60)>0?Math.floor(min/60)+'h'+(min%60>0?String(Math.round(min%60)).padStart(2,'0'):''):Math.round(min)+'min') : '—';
+  const STATUT_FR = {
+    'COMPLETE':'COMPLET','INCOMPLET':'INCOMPLET','EN_ROUTE':'EN ROUTE',
+    'SUR_SITE':'SUR SITE','EN_COURS':'EN COURS','EN_PAUSE':'EN PAUSE',
+    'ASSIGNE':'ASSIGNÉ','PLANIFIE':'PLANIFIÉ'
+  };
+  const fr = s => STATUT_FR[s] || (s||'').replace('_',' ');
 
   list.innerHTML = tickets.map(tk => {
     const c = ST_COLOR[tk.statut_terrain] || '#888';
     return `<div class="hist-item">
       <div class="hist-dot" style="background:${c}22;border-color:${c};color:${c}">${ST_ICON[tk.statut_terrain]||'•'}</div>
       <div class="hist-content">
-        <div class="hist-statut" style="color:${c}">${(tk.statut_terrain||'').replace('_',' ')} — ${tk.code_ticket}</div>
+        <div class="hist-statut" style="color:${c}">${fr(tk.statut_terrain)} · ${tk.code_ticket}</div>
         <div class="hist-time">${tk.incident_libelle||'—'} · ${fmt(tk.date_assignation)}</div>
         <div style="font-size:10px;color:var(--text-dim)">
           Assigné : ${fmt(tk.date_assignation)}
@@ -1417,8 +1411,24 @@ async function loadHistorique() {
 
 async function voirHistorique(tkId, code) {
   const data = await apiFetch(`/api/tickets/${tkId}`);
-  if(!data) return;
+  if(!data) { toast('Erreur','Impossible de charger l\'historique','error'); return; }
   const hist = data.historique || [];
+
+  const STATUT_FR_LOCAL = {
+    'COMPLETE':'COMPLET','INCOMPLET':'INCOMPLET','EN_ROUTE':'EN ROUTE',
+    'SUR_SITE':'SUR SITE','EN_COURS':'EN COURS','EN_PAUSE':'EN PAUSE',
+    'ASSIGNE':'ASSIGNÉ','PLANIFIE':'PLANIFIÉ'
+  };
+  const ST_COLOR_LOCAL = {
+    EN_ROUTE:'#8250ff', SUR_SITE:'#ffa500', EN_COURS:'#00d4ff',
+    EN_PAUSE:'#6b7280', COMPLETE:'#00c864', INCOMPLET:'#ff3c6e',
+    ASSIGNE:'#888', PLANIFIE:'#8250ff'
+  };
+  const ST_ICON_LOCAL = {
+    EN_ROUTE:'🚗', SUR_SITE:'📍', EN_COURS:'🔧',
+    EN_PAUSE:'☕', COMPLETE:'✅', INCOMPLET:'⚠️',
+    ASSIGNE:'📋', PLANIFIE:'📅'
+  };
 
   const modal = document.createElement('div');
   modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
@@ -1430,15 +1440,15 @@ async function voirHistorique(tkId, code) {
         </div>
         <div onclick="this.closest('[style*=fixed]').remove()" style="cursor:pointer;color:var(--text-dim);font-size:18px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-dim)'">✕</div>
       </div>
-      ${hist.length===0?'<div style="color:var(--text-dim);text-align:center;padding:20px">Aucun historique</div>':
+      ${hist.length===0?'<div style="color:var(--text-dim);text-align:center;padding:20px">Aucun historique disponible</div>':
         hist.map((h,i)=>{
-          const c=ST_COLOR[h.statut_apres]||'#888';
+          const c=ST_COLOR_LOCAL[h.statut_apres]||'#888';
           const _su=String(h.updated_at||'');const _mu=_su.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);const dt=_mu?_mu[3]+'/'+_mu[2]+' '+_mu[4]+':'+_mu[5]:'—';
           return `<div style="display:flex;gap:12px;padding-bottom:${i<hist.length-1?'14px':'0'};position:relative">
             ${i<hist.length-1?`<div style="position:absolute;left:13px;top:26px;bottom:0;width:1px;background:var(--border2)"></div>`:''}
-            <div style="width:26px;height:26px;border-radius:50%;background:${c}22;border:2px solid ${c};color:${c};display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">${ST_ICON[h.statut_apres]||'•'}</div>
+            <div style="width:26px;height:26px;border-radius:50%;background:${c}22;border:2px solid ${c};color:${c};display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">${ST_ICON_LOCAL[h.statut_apres]||'•'}</div>
             <div style="flex:1">
-              <div style="font-family:var(--font-heading);font-size:12px;font-weight:700;color:${c};margin-bottom:2px">${h.statut_apres}</div>
+              <div style="font-family:var(--font-heading);font-size:12px;font-weight:700;color:${c};margin-bottom:2px">${STATUT_FR_LOCAL[h.statut_apres]||h.statut_apres}</div>
               <div style="font-size:10px;color:var(--text-dim)">${h.updated_by||'—'} · ${dt}</div>
               ${h.cause?`<div style="margin-top:4px;padding:4px 8px;background:rgba(255,60,110,.08);border-left:2px solid var(--red);border-radius:0 5px 5px 0;font-size:11px;color:var(--red)">⚠ ${h.cause}</div>`:''}
               ${h.commentaire?`<div style="font-size:10px;color:var(--text-dim);margin-top:2px;font-style:italic">${h.commentaire}</div>`:''}
