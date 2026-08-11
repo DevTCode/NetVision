@@ -3506,3 +3506,139 @@
 19:01:11  INFO        Tickets                 : 0 (créés via dispatch)
 19:01:11  INFO        Rapport JSON : data\rapport_etl.json
 19:01:11  INFO      ━━━ TERMINÉ en 0.06s ━━━━━━━━━━━━━━━━━━━━━━━━
+16:00:10  INFO      ╔══════════════════════════════════════════════╗
+16:00:10  INFO      ║  ETL BI Télécom v3 — démarrage              ║
+16:00:10  INFO      ╚══════════════════════════════════════════════╝
+16:00:10  INFO      ━━━ EXTRACT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+16:00:10  INFO        Extrait  : secteurs.csv — 10 lignes
+16:00:10  INFO        Extrait  : equipements.csv — 120 lignes
+16:00:10  INFO        Extrait  : techniciens.csv — 30 lignes
+16:00:10  INFO        Extrait  : incidents.csv — 300 lignes
+16:00:10  INFO      ━━━ TRANSFORM ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+16:00:10  INFO        Secteurs transformés    : 10
+16:00:10  INFO        Équipements transformés : 120
+16:00:10  INFO        Techniciens transformés : 30
+16:00:10  INFO        Dim_temps générée       : 21 jours
+16:00:10  INFO        Incidents transformés   : 300 (erreurs: 0)
+16:00:10  INFO        Statut forcé OUVERT     : prêts pour dispatch
+16:00:10  INFO        Incidents critiques     : 103 / 300
+16:00:10  INFO        duree_estimee_min moy.  : 101 min
+16:00:10  INFO      ━━━ LOAD ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+16:00:10  INFO        Chargé (SQL) : dim_secteur — 10 lignes
+16:00:10  INFO        Chargé (SQL) : dim_equipement — 120 lignes
+16:00:10  INFO        Chargé (SQL) : dim_technicien — 30 lignes
+16:00:10  INFO        Chargé (SQL) : dim_temps — 21 lignes
+16:00:10  INFO        Chargé (SQL) : fact_incidents — 300 lignes
+16:00:10  INFO        Fichier SQL  : data\dwh_inserts.sql (212 Ko)
+16:00:10  INFO      ━━━ RAPPORT ETL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+16:00:10  INFO        Incidents OUVERT        : 300
+16:00:10  INFO        Sévérité                : {'MINEUR': 121, 'MAJEUR': 76, 'CRITIQUE': 103}
+16:00:10  INFO        Durée estimée moy.      : 101 min
+16:00:10  INFO        Heure pic               : 2h
+16:00:10  INFO        Techniciens dispo       : 24 / 30
+16:00:10  INFO        Indisponibles           : 6
+16:00:10  INFO        Tickets                 : 0 (créés via dispatch)
+16:00:10  INFO        Rapport JSON : data\rapport_etl.json
+16:00:10  INFO      ━━━ TERMINÉ en 0.07s ━━━━━━━━━━━━━━━━━━━━━━━━
+19:01:54  INFO      ╔══════════════════════════════════════════════╗
+19:01:54  INFO      ║  ETL BI Télécom v3 — démarrage              ║
+19:01:54  INFO      ╚══════════════════════════════════════════════╝
+19:01:54  INFO      ━━━ EXTRACT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+19:01:54  INFO        Extrait  : secteurs.csv — 10 lignes
+19:01:54  INFO        Extrait  : equipements.csv — 120 lignes
+19:01:54  INFO        Extrait  : techniciens.csv — 30 lignes
+19:01:54  INFO        Extrait  : incidents.csv — 300 lignes
+19:01:54  INFO      ━━━ TRANSFORM ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+19:01:54  INFO        Secteurs transformés    : 10
+19:01:54  INFO        Équipements transformés : 120
+19:01:54  INFO        Techniciens transformés : 30
+19:01:54  INFO        Dim_temps générée       : 21 jours
+19:01:54  INFO        Incidents transformés   : 300 (erreurs: 0)
+19:01:54  INFO        Statut forcé OUVERT     : prêts pour dispatch
+19:01:54  INFO        Incidents critiques     : 116 / 300
+19:01:54  INFO        duree_estimee_min moy.  : 220 min
+19:01:54  INFO      ━━━ LOAD ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+19:01:54  INFO        Chargé (SQL) : dim_secteur — 10 lignes
+19:01:54  INFO        Chargé (SQL) : dim_equipement — 120 lignes
+19:01:54  INFO        Chargé (SQL) : dim_technicien — 30 lignes
+19:01:54  INFO        Chargé (SQL) : dim_temps — 21 lignes
+19:01:54  INFO        Chargé (SQL) : fact_incidents — 300 lignes
+19:01:54  INFO        Fichier SQL  : data\dwh_inserts.sql (213 Ko)
+19:01:54  INFO      ━━━ RAPPORT ETL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+19:01:54  INFO        Incidents OUVERT        : 300
+19:01:54  INFO        Sévérité                : {'MINEUR': 115, 'MAJEUR': 69, 'CRITIQUE': 116}
+19:01:54  INFO        Durée estimée moy.      : 220 min
+19:01:54  INFO        Heure pic               : 14h
+19:01:54  INFO        Techniciens dispo       : 24 / 30
+19:01:54  INFO        Indisponibles           : 6
+19:01:54  INFO        Tickets                 : 0 (créés via dispatch)
+19:01:54  INFO        Rapport JSON : data\rapport_etl.json
+19:01:54  INFO      ━━━ TERMINÉ en 0.07s ━━━━━━━━━━━━━━━━━━━━━━━━
+23:04:27  INFO      ╔══════════════════════════════════════════════╗
+23:04:27  INFO      ║  ETL BI Télécom v3 — démarrage              ║
+23:04:27  INFO      ╚══════════════════════════════════════════════╝
+23:04:27  INFO      ━━━ EXTRACT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+23:04:27  INFO        Extrait  : secteurs.csv — 10 lignes
+23:04:27  INFO        Extrait  : equipements.csv — 120 lignes
+23:04:27  INFO        Extrait  : techniciens.csv — 30 lignes
+23:04:27  INFO        Extrait  : incidents.csv — 300 lignes
+23:04:27  INFO      ━━━ TRANSFORM ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+23:04:27  INFO        Secteurs transformés    : 10
+23:04:27  INFO        Équipements transformés : 120
+23:04:27  INFO        Techniciens transformés : 30
+23:04:27  INFO        Dim_temps générée       : 20 jours
+23:04:27  INFO        Incidents transformés   : 300 (erreurs: 0)
+23:04:27  INFO        Statut forcé OUVERT     : prêts pour dispatch
+23:04:27  INFO        Incidents critiques     : 116 / 300
+23:04:27  INFO        duree_estimee_min moy.  : 220 min
+23:04:27  INFO      ━━━ LOAD ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+23:04:27  INFO        Chargé (SQL) : dim_secteur — 10 lignes
+23:04:27  INFO        Chargé (SQL) : dim_equipement — 120 lignes
+23:04:27  INFO        Chargé (SQL) : dim_technicien — 30 lignes
+23:04:27  INFO        Chargé (SQL) : dim_temps — 20 lignes
+23:04:27  INFO        Chargé (SQL) : fact_incidents — 300 lignes
+23:04:27  INFO        Fichier SQL  : data\dwh_inserts.sql (212 Ko)
+23:04:27  INFO      ━━━ RAPPORT ETL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+23:04:27  INFO        Incidents OUVERT        : 300
+23:04:27  INFO        Sévérité                : {'MINEUR': 115, 'MAJEUR': 69, 'CRITIQUE': 116}
+23:04:27  INFO        Durée estimée moy.      : 220 min
+23:04:27  INFO        Heure pic               : 20h
+23:04:27  INFO        Techniciens dispo       : 24 / 30
+23:04:27  INFO        Indisponibles           : 6
+23:04:27  INFO        Tickets                 : 0 (créés via dispatch)
+23:04:27  INFO        Rapport JSON : data\rapport_etl.json
+23:04:27  INFO      ━━━ TERMINÉ en 0.07s ━━━━━━━━━━━━━━━━━━━━━━━━
+16:33:35  INFO      ╔══════════════════════════════════════════════╗
+16:33:35  INFO      ║  ETL BI Télécom v3 — démarrage              ║
+16:33:35  INFO      ╚══════════════════════════════════════════════╝
+16:33:35  INFO      ━━━ EXTRACT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+16:33:35  INFO        Extrait  : secteurs.csv — 10 lignes
+16:33:35  INFO        Extrait  : equipements.csv — 120 lignes
+16:33:35  INFO        Extrait  : techniciens.csv — 30 lignes
+16:33:35  INFO        Extrait  : incidents.csv — 300 lignes
+16:33:35  INFO      ━━━ TRANSFORM ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+16:33:35  INFO        Secteurs transformés    : 10
+16:33:35  INFO        Équipements transformés : 120
+16:33:35  INFO        Techniciens transformés : 30
+16:33:35  INFO        Dim_temps générée       : 63 jours
+16:33:35  INFO        Incidents transformés   : 300 (erreurs: 0)
+16:33:35  INFO        Statut forcé OUVERT     : prêts pour dispatch
+16:33:35  INFO        Incidents critiques     : 116 / 300
+16:33:35  INFO        duree_estimee_min moy.  : 220 min
+16:33:35  INFO      ━━━ LOAD ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+16:33:35  INFO        Chargé (SQL) : dim_secteur — 10 lignes
+16:33:35  INFO        Chargé (SQL) : dim_equipement — 120 lignes
+16:33:35  INFO        Chargé (SQL) : dim_technicien — 30 lignes
+16:33:35  INFO        Chargé (SQL) : dim_temps — 63 lignes
+16:33:35  INFO        Chargé (SQL) : fact_incidents — 300 lignes
+16:33:35  INFO        Fichier SQL  : data\dwh_inserts.sql (219 Ko)
+16:33:35  INFO      ━━━ RAPPORT ETL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+16:33:35  INFO        Incidents OUVERT        : 300
+16:33:35  INFO        Sévérité                : {'MINEUR': 115, 'MAJEUR': 69, 'CRITIQUE': 116}
+16:33:35  INFO        Durée estimée moy.      : 220 min
+16:33:35  INFO        Heure pic               : 20h
+16:33:35  INFO        Techniciens dispo       : 24 / 30
+16:33:35  INFO        Indisponibles           : 6
+16:33:35  INFO        Tickets                 : 0 (créés via dispatch)
+16:33:35  INFO        Rapport JSON : data\rapport_etl.json
+16:33:35  INFO      ━━━ TERMINÉ en 0.15s ━━━━━━━━━━━━━━━━━━━━━━━━
