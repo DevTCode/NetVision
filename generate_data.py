@@ -97,15 +97,15 @@ PRENOMS = [
 
 CAUSES_INCOMPLETE = [
     "Pièce de rechange manquante",
-    "Accès site sécurisé — autorisation requise",
+    "Accès site sécurisé : autorisation requise",
     "Problème sous-jacent plus grave que prévu",
     "Conditions météorologiques défavorables",
     "Équipement nécessite remplacement complet",
-    "Compétence spécialisée requise — escalade niveau 2",
-    "Client absent — accès site impossible",
-    "Câblage non conforme — travaux préalables requis",
-    "Coupure d'alimentation — attente ONEE",
-    "Route bloquée — site inaccessible",
+    "Compétence spécialisée requise : escalade niveau 2",
+    "Client absent : accès site impossible",
+    "Câblage non conforme : travaux préalables requis",
+    "Coupure d'alimentation : attente ONEE",
+    "Route bloquée : site inaccessible",
 ]
 
 CAUSES_INDISPO = [
