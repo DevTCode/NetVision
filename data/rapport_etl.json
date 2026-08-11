@@ -1,5 +1,5 @@
 {
-  "date_etl": "2026-06-14T19:01:11.238597",
+  "date_etl": "2026-08-09T16:33:35.545174",
   "nb_secteurs": 10,
   "nb_equipements": 120,
   "nb_techniciens": 30,
@@ -16,5 +16,5 @@
     "MAJEUR": 69,
     "CRITIQUE": 116
   },
-  "heure_pic_incidents": 14
+  "heure_pic_incidents": 20
 }
