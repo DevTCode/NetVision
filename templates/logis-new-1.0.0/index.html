@@ -71,7 +71,7 @@
               <span class="accent-2">intelligente</span>
             </h1>
 
-            <p>Plateforme BI centralisée pour la gestion des incidents, le dispatch des techniciens et le pilotage des infrastructures réseau Huawei au Maroc.</p>
+            <p>Plateforme BI centralisée pour la gestion des incidents, l'affectation des techniciens et le pilotage des infrastructures réseau Huawei au Maroc.</p>
 
             <div class="hero-btns">
               <a href="login.html" class="btn-primary-custom" style="color: white;">
@@ -113,7 +113,7 @@
                 </div>
                 <div>
                   <div style="font-size:11px;color:rgba(200,212,232,0.5)">Incident critique</div>
-                  <div style="font-size:13px">INC-0042 — Casablanca</div>
+                  <div style="font-size:13px">INC-0042 : Casablanca</div>
                 </div>
               </div>
 
@@ -122,7 +122,7 @@
                   <div class="dp-dot" style="background:#ff3c6e"></div>
                   <div class="dp-dot" style="background:#ffa500"></div>
                   <div class="dp-dot" style="background:#00c864"></div>
-                  <span style="font-size:11px;color:rgba(200,212,232,0.3);margin-left:8px;font-family:var(--heading-font)">Dashboard NOC — NetVision</span>
+                  <span style="font-size:11px;color:rgba(200,212,232,0.3);margin-left:8px;font-family:var(--heading-font)">Tableau de bord NOC — NetVision</span>
                 </div>
 
                 <div class="dp-kpis">
@@ -136,7 +136,7 @@
                   </div>
                   <div class="dp-kpi">
                     <div class="k-label">Résolution</div>
-                    <div class="k-val cyan">68%</div>
+                    <div class="k-val white">68%</div>
                   </div>
                 </div>
 
@@ -181,7 +181,7 @@
                 </div>
                 <div>
                   <div style="font-size:11px;color:rgba(200,212,232,0.5)">Technicien assigné</div>
-                  <div style="font-size:13px">MRANI Bilal — Grand Casablanca</div>
+                  <div style="font-size:13px">MRANI Bilal : Grand Casablanca</div>
                 </div>
               </div>
             </div>
@@ -210,8 +210,8 @@
             <div class="feat-item">
               <div class="feat-icon red"><i class="bi bi-geo-alt-fill"></i></div>
               <div>
-                <h4>Dispatch intelligent</h4>
-                <p>Assignation du technicien par compétence, secteur géographique et note de performance avec report automatique au lendemain (J+1, 09h00) si fin estimée après 18h, et redispatch des incidents bloqués (INCOMPLET).</p>
+                <h4>Affectation intelligente</h4>
+                <p>Affectation du technicien par secteur géographique et proximité avec report automatique au lendemain (J+1, 09h00) si fin estimée après 18h, et réaffectation des incidents bloqués (INCOMPLET).</p>
               </div>
             </div>
           </div>
@@ -237,7 +237,7 @@
 
           <div class="col-lg-6" data-aos="fade-up">
             <div class="section-tag">Architecture système</div>
-            <h2>Pipeline ETL →<br>Data Warehouse →<br>Dashboards BI</h2>
+            <h2>Pipeline ETL →<br>Entrepôt de données →<br>Tableaux de bord BI</h2>
             <p class="lead-text">
               Une architecture BI complète construite sur PostgreSQL, alimentée par un ETL Python qui transforme les données opérationnelles en indicateurs décisionnels.
             </p>
@@ -245,8 +245,8 @@
             <div class="about-feature">
               <div class="about-feature-icon"><i class="bi bi-database-fill"></i></div>
               <div>
-                <h5>Star Schema PostgreSQL</h5>
-                <p>Fact_Incidents, Dim_Equipement, Dim_Technicien, Dim_Secteur, Dim_Temps — 300+ incidents, 120 équipements.</p>
+                <h5>Schéma en étoile PostgreSQL</h5>
+                <p>Schéma en étoile PostgreSQL — fact_incidents, fact_tickets, dim_equipement, dim_technicien, dim_secteur — 300 incidents, 120 équipements.</p>
               </div>
             </div>
 
@@ -262,7 +262,7 @@
               <div class="about-feature-icon"><i class="bi bi-shield-check"></i></div>
               <div>
                 <h5>Deux interfaces dédiées</h5>
-                <p>Dashboard NOC admin avec carte, Gantt et dispatch — Interface terrain technicien avec tickets, statuts et historique.</p>
+                <p>Deux interfaces dédiées : tableau de bord NOC Admin avec carte, Gantt et affectation · Interface terrain technicien avec tickets, statuts et historique.</p>
               </div>
             </div>
 
@@ -299,7 +299,7 @@
                   <div class="schema-step-icon s3"><i class="bi bi-database"></i></div>
                   <div>
                     <div class="schema-step-label">Data Warehouse PostgreSQL</div>
-                    <div class="schema-step-sub">Star Schema · fact_incidents · fact_tickets · dim_technicien · dim_equipement · dim_secteur</div>
+                    <div class="schema-step-sub">Schéma en étoile · fact_incidents · fact_tickets · dim_technicien · dim_equipement · dim_secteur</div>
                   </div>
                 </div>
                 <div class="schema-arrow"><i class="bi bi-arrow-down"></i></div>
@@ -307,7 +307,7 @@
                   <div class="schema-step-icon s4"><i class="bi bi-server"></i></div>
                   <div>
                     <div class="schema-step-label">API Flask</div>
-                    <div class="schema-step-sub">31 endpoints REST · JSON · CORS · Flask</div>
+                    <div class="schema-step-sub">34 points d'accès REST · JSON · CORS · Flask</div>
                   </div>
                 </div>
                 <div class="schema-arrow"><i class="bi bi-arrow-down"></i></div>
@@ -343,9 +343,9 @@
               <div class="mc-icon" style="background:rgba(0,212,255,0.1);color:#79cedd;border:1px solid rgba(255,60,110,0.2);border:1px solid rgba(0,212,255,0.2)">
                 <i class="bi bi-speedometer2"></i>
               </div>
-              <h3>Dashboard Global</h3>
-              <p>KPI réseau temps réel : incidents ouverts, critiques, en cours de maintenance, techniciens disponibles, MTTR moyen. Refresh automatique toutes les 15s.</p>
-              <span class="mc-tag" style="background:rgba(0,212,255,0.08);color:#74d0f7;border:1px solid rgba(255,60,110,0.2)">NOC Employé</span>
+              <h3>Tableau de bord Global</h3>
+              <p>KPI réseau temps réel : incidents ouverts, critiques, en cours, techniciens disponibles, MTTR moyen. Rafraîchissement automatique toutes les 3 secondes.</p>
+              <span class="mc-tag" style="background:rgba(0,212,255,0.08);color:#74d0f7;border:1px solid rgba(255,60,110,0.2)">NOC Admin</span>
             </div>
           </div>
 
@@ -355,7 +355,7 @@
                 <i class="bi bi-map-fill"></i>
               </div>
               <h3>Carte Géographique</h3>
-              <p>Carte interactive Leaflet.js : 120 équipements Huawei, incidents OUVERT et EN_COURS, 30 techniciens géolocalisés sur 10 secteurs. Dispatch direct depuis la carte.</p>
+              <p>Carte interactive Leaflet.js : 120 équipements Huawei, incidents OUVERT et EN_COURS, 30 techniciens géolocalisés sur 10 secteurs. Affectation directe depuis la carte.</p>
               <span class="mc-tag" style="background:rgba(255,60,110,0.08);color:#ff3c6e">Leaflet + OpenStreetMap</span>
             </div>
           </div>
@@ -377,8 +377,8 @@
                 <i class="bi bi-ticket-detailed-fill"></i>
               </div>
               <h3>Système de Tickets</h3>
-              <p>Création à l'assignation, cycle terrain : EN_ROUTE → SUR_SITE → EN_COURS → COMPLETE/INCOMPLET, avec pause terrain (1x max, 15-30 min) et clôture auto si durée dépassée. Historique complet par ticket (timeline).</p>
-              <span class="mc-tag" style="background:rgba(130,80,255,0.08);color:#8250ff">Pause · Clôture auto · Historique</span>
+              <p>Création à l'affectation, cycle terrain : EN_ROUTE → SUR_SITE → EN_COURS → COMPLET/INCOMPLET, avec pause terrain (1x max, 15-30 min) et clôture automatique si durée dépassée. Chronologie complète par ticket.</p>
+              <span class="mc-tag" style="background:rgba(130,80,255,0.08);color:#8250ff">Pause · Clôture auto · Chronologie</span>
             </div>
           </div>
 
@@ -399,8 +399,8 @@
                 <i class="bi bi-file-earmark-bar-graph-fill"></i>
               </div>
               <h3>Rapports & Exports</h3>
-              <p>Planning journalier Gantt par technicien, export Excel avec dates, durées réelles et causes. Historique consultable par date.</p>
-              <span class="mc-tag" style="background:rgba(0,150,255,0.08);color:#0096ff">Gantt + Export Excel</span>
+              <p>Planning journalier Gantt par technicien, export CSV avec dates, durées réelles et causes. Historique consultable par date.</p>
+              <span class="mc-tag" style="background:rgba(0,150,255,0.08);color:#0096ff">Gantt + Export CSV</span>
             </div>
           </div>
 
@@ -444,21 +444,21 @@
 
           <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
             <div class="role-card featured-role">
-              <div class="role-badge emp"><i class="bi bi-building"></i> NOC Employé</div>
+              <div class="role-badge emp"><i class="bi bi-building"></i> NOC Admin</div>
               <h3>Centre Opérationnel Réseau</h3>
-              <p>Pilotage global de l'infrastructure : supervision en temps réel, dispatch des techniciens, suivi des tickets et analyse des KPI réseau.</p>
+              <p>Pilotage global de l'infrastructure : supervision en temps réel, affectation des techniciens, suivi des tickets et analyse des KPI réseau.</p>
               <ul class="role-features">
-                <li><i class="bi bi-check-circle-fill"></i> Dashboard KPI global temps réel</li>
+                <li><i class="bi bi-check-circle-fill"></i> Tableau de bord KPI global temps réel</li>
                 <li><i class="bi bi-check-circle-fill"></i> Carte interactive incidents + techniciens</li>
-                <li><i class="bi bi-check-circle-fill"></i> Dispatch intelligent par proximité</li>
-                <li><i class="bi bi-check-circle-fill"></i> Popups temps réel changements statut</li>
-                <li><i class="bi bi-check-circle-fill"></i> Gantt journalier + historique + export Excel</li>
-                <li><i class="bi bi-check-circle-fill"></i> Redispatch des incidents bloqués (INCOMPLET)</li>
+                <li><i class="bi bi-check-circle-fill"></i> Affectation intelligente par proximité</li>
+                <li><i class="bi bi-check-circle-fill"></i> Notifications temps réel changements statut</li>
+                <li><i class="bi bi-check-circle-fill"></i> Gantt journalier + historique + export CSV</li>
+                <li><i class="bi bi-check-circle-fill"></i> Réaffectation des incidents bloqués (INCOMPLET)</li>
                 <li><i class="bi bi-check-circle-fill"></i> Bouton appel technicien si retard</li>
               </ul>
               <a href="login.html" class="role-login-btn emp-btn" style="color: white;">
                 <i class="bi bi-box-arrow-in-right" style="color: white;"></i>
-                Se connecter — NOC
+                Se connecter · NOC
               </a>
             </div>
           </div>
@@ -471,10 +471,10 @@
               <ul class="role-features">
                 <li><i class="bi bi-check-circle-fill"></i> Mes tickets assignés</li>
                 <li><i class="bi bi-check-circle-fill"></i> Mise à jour statut EN_ROUTE → SUR_SITE → EN_COURS</li>
-                <li><i class="bi bi-check-circle-fill"></i> Popup notification nouveau ticket assigné</li>
+                <li><i class="bi bi-check-circle-fill"></i> Notification nouveau ticket assigné</li>
                 <li><i class="bi bi-check-circle-fill"></i> Pause terrain avec décompte (1x par ticket, 15-30 min)</li>
                 <li><i class="bi bi-check-circle-fill"></i> Actions bloquées si durée dépassée</li>
-                <li><i class="bi bi-check-circle-fill"></i> Clôture COMPLETE ou INCOMPLET avec cause</li>
+                <li><i class="bi bi-check-circle-fill"></i> Clôture COMPLET ou INCOMPLET avec cause</li>
                 <li><i class="bi bi-check-circle-fill"></i> Historique de mes interventions</li>
               </ul>
               <a href="login.html" class="role-login-btn tech-btn">
@@ -511,7 +511,7 @@
                   <i class="faq-toggle bi bi-chevron-right"></i>
                 </h3>
                 <div class="faq-content">
-                  <p>L'admin NOC sélectionne l'incident et clique sur Dispatch. Le système trie les techniciens disponibles par : compétence correspondant au type d'incident (2G/3G, 4G/LTE, 5G, Fibre, Routage IP...), même secteur géographique, meilleure note de performance, puis distance. Le premier de la liste reçoit un badge "★ Meilleur". Si la fin estimée de l'intervention dépasse 18h00, l'assignation est reportée au lendemain (J+1, 09h00).</p>
+                  <p>L'admin NOC sélectionne l'incident et lance l'affectation. Le système trie les techniciens disponibles par secteur géographique identique en priorité, puis par distance croissante. Le premier de la liste reçoit un badge "✦ Recommandé". Si la fin estimée de l'intervention dépasse 18h00, l'affectation est reportée au lendemain (J+1, 09h00).</p>
                 </div>
               </div>
 
@@ -522,7 +522,7 @@
                   <i class="faq-toggle bi bi-chevron-right"></i>
                 </h3>
                 <div class="faq-content">
-                  <p>8 types d'équipements Huawei : BTS 2G/3G/4G/5G, Routeur backbone (NE40E-X8), Switch distribution (ATN910C), OLT Fibre, et Antennes sectorielles — répartis sur 10 secteurs couvrant les principales villes marocaines.</p>
+                  <p>8 types d'équipements Huawei : BTS 2G/3G/4G/5G, Routeur backbone (NE40E-X8), Switch distribution (ATN910C), OLT Fibre, et Antennes sectorielles · répartis sur 10 secteurs couvrant les principales villes marocaines.</p>
                 </div>
               </div>
 
@@ -533,18 +533,18 @@
                   <i class="faq-toggle bi bi-chevron-right"></i>
                 </h3>
                 <div class="faq-content">
-                  <p>Oui — la plateforme utilise Leaflet.js avec OpenStreetMap, 100% gratuit, sans clé API ni carte bancaire. Les équipements, incidents et techniciens sont affichés en temps réel via les coordonnées GPS stockées dans le DWH.</p>
+                  <p>Oui, la plateforme utilise Leaflet.js avec CartoCDN, 100% gratuit, sans clé API. Les équipements, incidents et techniciens sont affichés en temps réel via les coordonnées GPS stockées dans l'entrepôt de données.</p>
                 </div>
               </div>
 
               <div class="faq-item" data-aos="fade-up" data-aos-delay="300">
                 <h3>
                   <i class="faq-icon bi bi-question-circle"></i>
-                  Quels KPI sont calculés par l'ETL ?
+                  Quels KPI sont calculés en temps réel ?
                   <i class="faq-toggle bi bi-chevron-right"></i>
                 </h3>
                 <div class="faq-content">
-                  <p>Incidents ouverts et critiques (décrémentés à la résolution), techniciens disponibles, tickets actifs, MTTR moyen, durée estimée moyenne. Les KPI sont recalculés en temps réel depuis PostgreSQL toutes les 3 secondes. En parallèle, un job vérifie toutes les 3 secondes les tickets en dépassement de durée pour les clôturer automatiquement.</p>
+                  <p>Incidents ouverts et critiques (décrémentés à la résolution), techniciens disponibles, tickets actifs, MTTR moyen, durée estimée moyenne, taux de résolution. Les KPI sont recalculés en temps réel depuis PostgreSQL toutes les 3 secondes. En parallèle, un processus vérifie toutes les 3 secondes les tickets en dépassement de durée pour les clôturer automatiquement.</p>
                 </div>
               </div>
 
@@ -570,7 +570,7 @@
             </div>
             <span class="sitename" style="color: white;">Net<span style="color: rgb(0, 12, 63);">Vision</span></span>
           </a>
-          <p>Plateforme BI de supervision et pilotage des infrastructures télécom Huawei. Gestion des incidents, dispatch techniciens, analyse KPI réseau.</p>
+          <p>Plateforme BI de supervision et pilotage des infrastructures télécom Huawei. Gestion des incidents, affectation des techniciens, analyse KPI réseau.</p>
           <div class="social-links d-flex mt-3">
             <a href="#"><i class="bi bi-github"></i></a>
             <a href="#"><i class="bi bi-linkedin"></i></a>
@@ -592,7 +592,7 @@
         <div class="col-lg-2 col-6 footer-links">
           <h4>Modules</h4>
           <ul>
-            <li><a href="#" style="color: white;">Dashboard KPI</a></li>
+            <li><a href="#" style="color: white;">Tableau de bord KPI</a></li>
             <li><a href="#" style="color: white;">Carte réseau</a></li>
             <li><a href="#" style="color: white;">Incidents</a></li>
             <li><a href="#" style="color: white;">Tickets</a></li>
@@ -603,7 +603,7 @@
         <div class="col-lg-3 col-md-12 footer-contact">
           <h4>Pipeline</h4>
           <p><strong>Technologie :</strong> Python · Flask · PostgreSQL</p>
-          <p><strong>Frontend :</strong> Bootstrap · Leaflet.js</p>
+          <p><strong>Interface :</strong> Bootstrap · Leaflet.js</p>
           <p><strong>Données :</strong> 300 incidents · 120 équipements · 30 techniciens</p>
           <p class="mt-3"><strong>Secteurs :</strong> 10 régions du Maroc</p>
           <p><strong>Équipements :</strong> Huawei BTS 2G/3G/4G · Routeur · OLT · Antenne</p>
