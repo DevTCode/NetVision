@@ -1,0 +1,425 @@
+
+
+## 1. VUE D'ENSEMBLE : Ce que fait le projet
+
+NetVision est une **plateforme de supervision du réseau télécom** pour le NOC (Network Operations Center) de Huawei Maroc. Elle gère le cycle de vie complet d'un incident réseau :
+
+```
+Incident détecté → NOC Admin le voit sur la carte → Dispatch vers un technicien
+→ Technicien intervient sur le terrain → Mise à jour statut étape par étape
+→ Clôture (succès ou échec) → Libération du technicien → Rapport dans le Gantt
+```
+
+Elle a **deux utilisateurs** :
+- **NOC Admin** : surveille, dispatche, consulte le Gantt et les KPI
+- **Technicien terrain** : reçoit son ticket, met à jour son statut, gère sa pause, clôture
+
+---
+
+## 2. LES DONNÉES : Ce qui existe en base
+
+### Les 10 secteurs géographiques (avec coordonnées GPS exactes)
+
+| ID | Ville | Région | Latitude | Longitude |
+|----|-------|--------|----------|-----------|
+| 1 | Grand Casablanca | Casablanca-Settat | 33.5731 | -7.5898 |
+| 2 | Rabat-Salé | Rabat-Salé-Kénitra | 34.0209 | -6.8416 |
+| 3 | Marrakech | Marrakech-Safi | 31.6295 | -7.9811 |
+| 4 | Fès | Fès-Meknès | 34.0181 | -5.0078 |
+| 5 | Tanger | Tanger-Tétouan-Al Hoceima | 35.7595 | -5.8340 |
+| 6 | Agadir | Souss-Massa | 30.4278 | -9.5981 |
+| 7 | Meknès | Fès-Meknès | 33.8935 | -5.5547 |
+| 8 | Oujda | Oriental | 34.6867 | -1.9114 |
+| 9 | Kénitra | Rabat-Salé-Kénitra | 34.2610 | -6.5802 |
+| 10 | Tétouan | Tanger-Tétouan-Al Hoceima | 35.5785 | -5.3684 |
+
+### Les 120 équipements
+
+Chaque équipement est **positionné aléatoirement autour du centre de son secteur dans un rayon de 25 km** (via `coord_autour(lat, lng, rayon_km=25)`). Son code suit le format `EQ-{secteur_id:02d}-{id:04d}`, par exemple `EQ-01-0042` pour l'équipement 42 du secteur Casablanca. Il y a 8 types :
+
+| Type | Description | Modèles Huawei possibles |
+|------|-------------|--------------------------|
+| BTS_2G | Station de base 2G | RRU3908, BBU5900 |
+| BTS_3G | Station de base 3G | AAU5614, BBU5900 |
+| BTS_4G | Station de base 4G LTE | AAU5614, BBU5900 |
+| BTS_5G | Station de base 5G NR | AAU5614, BBU5900 |
+| ROUTEUR | Routeur backbone | NE40E-X8, ATN910C |
+| SWITCH | Switch distribution | ATN910C, NE40E-X8 |
+| OLT | Optical Line Terminal | BBU5900, NE40E-X8 |
+| ANTENNE | Antenne sectorielle | RRU3908, AAU5614 |
+
+Distribution des statuts : **75% ACTIF, 18% MAINTENANCE, 7% HORS_SERVICE**.
+
+### Les 300 incidents
+
+Générés sur les **7 derniers jours**, tous au statut **OUVERT** au départ. Chaque incident hérite des coordonnées GPS de l'équipement concerné. Il y a 8 types avec leurs sévérités et durées estimées :
+
+| Type | Libellé | Sévérité | Durée min | Durée max |
+|------|---------|----------|-----------|-----------|
+| PANNE_COMPLETE | Panne totale équipement | CRITIQUE | 120 min | 480 min |
+| COUPURE_FIBRE | Coupure fibre optique | CRITIQUE | 180 min | 600 min |
+| PANNE_ALIM | Panne alimentation | CRITIQUE | 240 min | 720 min |
+| DEGRADATION | Dégradation performances | MAJEUR | 60 min | 240 min |
+| SURCHARGE | Surcharge trafic | MAJEUR | 45 min | 180 min |
+| ALARME_RESEAU | Alarme réseau détectée | MINEUR | 30 min | 120 min |
+| INTERFERENCE | Interférence signal | MINEUR | 20 min | 90 min |
+| MISE_A_JOUR | Echec mise à jour firmware | MINEUR | 60 min | 180 min |
+
+La durée estimée pour chaque incident est tirée aléatoirement dans l'intervalle [durée_min, durée_max] de son type. **C'est cette durée qui gouverne toute la logique de clôture automatique**, le J+1 et l'affichage Gantt.
+
+### Les 30 techniciens
+
+- Chacun est rattaché à **un secteur** (tiré aléatoirement parmi les 10)
+- Positionné dans un rayon de **15 km** autour du centre de son secteur
+- A **2 à 4 compétences** parmi : 2G/3G, 4G/LTE, 5G, Fibre, Routage IP, Maintenance BTS, Optique
+- Note de performance entre **3.0 et 5.0**
+- Horaires **09h00-18h00** fixes
+- **85% DISPONIBLE, 15% INDISPONIBLE** (congé, maladie, etc.) au départ
+- Noms marocains réels (BENALI, ELHASSANI, CHRAIBI… et prénoms Youssef, Fatima, Mohammed…)
+
+---
+
+## 3. L'ARCHITECTURE EN 3 COUCHES
+
+```
+generate_data.py ──► data/ (CSV + schema_dwh.sql)
+      │
+      ▼
+etl_pipeline.py ──► PostgreSQL "bi_telecom" (schéma en étoile)
+      │
+      ▼
+app.py (Flask, port 5000) ──► API REST 34 endpoints JSON
+      │
+      ├──► login.html      (choix profil)
+      ├──► noc_admin.html  (dashboard, carte, incidents, Gantt)
+      └──► tech.html       (interface terrain)
+```
+
+**Pourquoi PostgreSQL ?** Parce qu'il supporte `FILTER WHERE` dans les agrégations (calculer plusieurs KPI en une seule requête), les jointures `LATERAL` (calculer dynamiquement le ticket actif de chaque technicien) et la gestion native des fuseaux horaires (`Africa/Casablanca`).
+
+**Pourquoi Flask et pas Django ?** Flask est léger, il donne le contrôle total du SQL. Django aurait imposé un ORM qui rend difficile les requêtes analytiques complexes. Node.js aurait été utile pour du WebSocket temps réel, mais le polling toutes les 3-10 secondes suffit ici.
+
+**Pourquoi Vanilla JS et pas React/Vue ?** Pas de bundler nécessaire, déploiement simplifié, `fetch + async/await` couvre tous les besoins d'une interface de supervision.
+
+---
+
+## 4. LA BASE DE DONNÉES : SCHÉMA EN ÉTOILE
+
+### Tables de dimensions (données stables, descriptives)
+
+- **dim_secteur** — 10 lignes, les 10 villes avec coordonnées GPS
+- **dim_equipement** — 120 lignes, les équipements Huawei avec type, modèle, statut, position
+- **dim_technicien** — 30 lignes, les techniciens avec compétences, note, statut courant
+- **dim_temps** — calendrier pour les analyses temporelles
+
+### Tables de faits (données mesurables, évolutives)
+
+- **fact_incidents** — 300 lignes au départ, un incident par équipement en panne
+- **fact_tickets** — créés à chaque dispatch (vide au départ)
+
+### Table d'audit
+
+- **ticket_historique** — enregistre **chaque transition de statut** d'un ticket (avant/après, auteur, horodatage, commentaire)
+
+### Règle fondamentale : `date_assignation <= NOW()`
+
+C'est la clé de la logique J+1. Un ticket créé pour demain 09h00 existe en base aujourd'hui, mais la condition `date_assignation <= NOW()` fait qu'il n'apparaît ni dans le ticket actif du technicien, ni dans le Gantt du jour, ni dans le dispatch — jusqu'à demain matin.
+
+---
+
+## 5. LE PIPELINE ETL
+
+`generate_data.py` génère les données et le schéma SQL. `etl_pipeline.py` les charge dans PostgreSQL dans l'ordre des contraintes de clés étrangères :
+
+```
+secteurs → équipements → techniciens → incidents → (tickets vides) → historique
+```
+
+L'ordre est obligatoire : on ne peut pas insérer un équipement avant son secteur (FK), ni un incident avant son équipement.
+
+---
+
+## 6. LA CONNEXION À LA BASE DE DONNÉES
+
+```python
+DB_CONFIG = {
+    "host": "127.0.0.1",
+    "port": 5433,
+    "dbname": "bi_telecom",
+    "user": "postgres",
+    "password": "admin",
+}
+```
+
+Chaque connexion ouvre avec `options="-c timezone=Africa/Casablanca"` — c'est critique pour que `NOW()` retourne l'heure marocaine, pas UTC. Flask gère la connexion via le contexte de requête (`g.db`) : ouverte à la première utilisation, fermée automatiquement à la fin de la requête HTTP (`@app.teardown_appcontext`).
+
+**Attention aux deux types de connexion dans le code :** Pour les endpoints de dispatch et J+1, le code ouvre une **connexion dédiée indépendante** (pas via `g.db`) pour garantir le commit même si la connexion Flask est partagée. C'est un choix technique délibéré pour éviter les problèmes de transaction.
+
+---
+
+## 7. LES 34 ENDPOINTS — EXPLICATION DÉTAILLÉE
+
+### Groupe 1 : Santé et KPI
+
+**`GET /api/health`**
+Vérifie que PostgreSQL est connecté. Retourne le nombre d'incidents et de tickets en base, plus un timestamp. Utilisé au démarrage pour diagnostiquer la connexion.
+
+**`GET /api/kpi`**
+C'est l'endpoint le plus appelé (toutes les 3 secondes). Il commence systématiquement par appeler `_fermer_retards_interne()` pour rattraper les tickets en retard avant d'afficher les KPI. Il calcule en **une seule requête SQL** agrégée les 7 indicateurs :
+- `incidents_critiques` : CRITIQUE + (OUVERT ou EN_COURS)
+- `incidents_ouverts` : statut OUVERT uniquement
+- `en_maintenance_active` : tickets EN_ROUTE, SUR_SITE ou EN_COURS
+- `duree_estimee_moy_min` : moyenne des durées estimées
+- `disponibles` : techniciens sans ticket actif
+- `mttr_technique_min` : moyenne des durées réelles des tickets COMPLETE
+- `taux_resolution_pct` : % incidents RESOLU ou FERME
+
+### Groupe 2 : Secteurs et équipements
+
+**`GET /api/secteurs`** — Liste des 10 secteurs avec coordonnées GPS
+
+**`GET /api/secteurs/incidents`** — Secteurs enrichis avec leur nombre d'incidents, d'incidents ouverts, critiques et leur MTTR
+
+**`GET /api/equipements`** — Liste des 120 équipements, filtrable par `secteur_id`, `type`, `statut`, paginée
+
+**`GET /api/equipements/stats`** — Répartition par type avec comptage ACTIF/MAINTENANCE/HORS_SERVICE
+
+### Groupe 3 : Incidents
+
+**`GET /api/incidents`** — Liste filtrée et paginée. Filtre par défaut : `statut=OUVERT`. Accepte aussi `statut=TOUS`, `severite`, `secteur_id`, `type_incident`. Jointure avec `dim_equipement` et `dim_secteur` pour enrichir chaque ligne.
+
+**`GET /api/incidents/critiques`** — Incidents sévérité CRITIQUE et statut OUVERT/EN_COURS uniquement
+
+**`GET /api/incidents/par-secteur`** — Données pour le graphique "Incidents par secteur" : nombre d'incidents, d'ouverts, de critiques et MTTR par secteur
+
+**`GET /api/incidents/par-reseau`** — Données pour le graphique "Par réseau" : incidents groupés par type d'équipement (BTS_4G, ROUTEUR, etc.)
+
+**`GET /api/incidents/par-heure`** — Distribution horaire sur 24h (pour l'histogramme du dashboard). Utilise `EXTRACT(HOUR FROM date_detection)`
+
+**`GET /api/incidents/evolution`** — Évolution sur 7 jours (endpoint backend existant, non câblé côté front — piste d'évolution)
+
+**`GET /api/incidents/<id>`** — Détail d'un incident, avec son dernier ticket associé (technicien assigné, statut terrain)
+
+**`GET /api/incidents/escalade`** — Incidents CRITIQUE ou MAJEUR, statut OUVERT, sans technicien assigné depuis plus de 30 minutes. Endpoint backend existant, non exposé dans l'interface actuelle.
+
+**`POST /api/incidents/<id>/debloquer`** — Remet un incident INCOMPLET en OUVERT pour permettre un nouveau dispatch. Remet aussi `ticket_id`, `technicien_assigne_id` et `technicien_assigne_nom` à NULL.
+
+### Groupe 4 : Techniciens
+
+**`GET /api/techniciens`** — Liste enrichie avec calcul dynamique du statut réel via jointure LATERAL. Le statut affiché n'est **pas** lu depuis `dim_technicien.statut` directement mais calculé : si un ticket actif existe pour ce technicien avec `date_assignation <= NOW()`, son statut devient EN_INTERVENTION (ou EN_PAUSE). Filtrable par `secteur_id`, `statut`.
+
+**`GET /api/techniciens/disponibles`** — Techniciens `statut=DISPONIBLE AND ticket_actif_id IS NULL` (lecture directe de dim_technicien, plus rapide pour le dispatch)
+
+**`GET /api/techniciens/<id>`** — Détail complet : 10 tickets récents, stats (total, complétés, incomplets, durée moyenne, note moyenne), et **auto-synchronisation** : si la DB dit EN_INTERVENTION mais qu'aucun ticket actif n'existe réellement, le code remet automatiquement le statut à DISPONIBLE.
+
+**`GET /api/techniciens/<id>/ticket-actif`** — Retourne le ticket actif d'un technicien avec toutes les informations de l'incident (libellé, type, coordonnées GPS, équipement) et l'historique complet. Utilisé par `tech.html` toutes les 10 secondes pour rafraîchir l'affichage du technicien terrain.
+
+### Groupe 5 : Dispatch
+
+**`GET /api/dispatch/<incident_id>`** — Retourne l'incident et la liste des techniciens disponibles, triés par `secteur_id = incident.secteur_id DESC, distance_km ASC`. La formule de distance exacte :
+```
+distance_km = 111.0 × √((lat_tech − lat_inc)² + (lng_tech − lng_inc)²)
+```
+C'est une approximation euclidienne (valide pour de petites distances). Aussi retourne deux sous-listes : `meme_secteur` (tous) et `autres_secteurs` (limités à 5).
+
+**`POST /api/dispatch/assigner`** — C'est l'endpoint principal du dispatch. Voici exactement ce qu'il fait dans l'ordre :
+1. Vérifie que l'incident est OUVERT et le technicien DISPONIBLE
+2. Calcule la distance
+3. Récupère l'heure exacte depuis PostgreSQL (`pg_now()`, pas `datetime.now()` Python pour éviter les décalages)
+4. **Logique J+1** : calcule `fin_eff = heure_actuelle_en_minutes + duree_estimee_min`. Si `fin_eff > 18*60` (18h00) **ou** si l'heure est avant 09h00 ou après 18h00, renvoie `confirmation_requise: True` sans créer le ticket — le front affiche le popup
+5. Si pas J+1 : crée le ticket dans `fact_tickets`, met `dim_technicien.statut = EN_INTERVENTION`, met `fact_incidents.statut = EN_COURS`, insère dans `ticket_historique`
+6. Le code du ticket suit le format `TKT-{inc_id:04d}-{tech_id:03d}-{HHMMSS}`
+
+**`POST /api/dispatch/assigner-j1`** — Confirme le dispatch J+1. Crée le ticket avec `date_assignation = demain 09h00`. Le technicien reste DISPONIBLE aujourd'hui. Le ticket n'apparaîtra dans le Gantt et chez le technicien que demain matin quand `date_assignation <= NOW()` deviendra vrai.
+
+### Groupe 6 : Tickets
+
+**`GET /api/tickets`** — Liste filtrée par `statut`, `severite`, `statut_terrain`, `secteur_id`, `technicien_id`, avec option `today=1` pour le jour courant
+
+**`GET /api/tickets/<id>`** — Détail complet avec historique
+
+**`GET /api/tickets/<id>/historique`** — Historique seul (audit trail)
+
+**`GET /api/tickets/incomplets`** — Tous les tickets INCOMPLET
+
+**`PATCH /api/tickets/<id>/statut`** — C'est l'endpoint le plus important côté terrain. Il gère **toutes les transitions** :
+- `EN_ROUTE` → enregistrement horodaté
+- `SUR_SITE` → enregistre `date_arrivee_site = now`
+- `EN_COURS` → enregistre `date_debut_intervention = now` (seulement si pas déjà rempli)
+- `COMPLETE` → enregistre `date_fin_intervention = now`, calcule `duree_intervention_min = (now - date_assignation).total_seconds() / 60` (depuis l'assignation, **tout inclus trajet + intervention**), remet technicien DISPONIBLE, passe l'incident en RESOLU
+- `INCOMPLET` → cause obligatoire, remet technicien DISPONIBLE, passe l'incident en INCOMPLET (prêt pour redispatch)
+- Toute transition insère dans `ticket_historique`
+
+**`POST /api/tickets/<id>/pause`** — Gère la pause en deux temps avec action `START` ou `END` :
+- **START** : vérifie que `duree_pause_min = 0` (une seule pause autorisée), passe en EN_PAUSE, enregistre `pause_debut = now`, met `dim_technicien.statut = EN_PAUSE`
+- **END** : calcule `dur = (now - pause_debut).total_seconds() / 60`, remet EN_COURS, ajoute `dur` à `duree_pause_min` ET à `duree_estimee_min` (repousse la fin théorique pour éviter la clôture auto pendant la pause), remet technicien EN_INTERVENTION
+
+**`POST /api/tickets/fermer-retards`** — Appelle `_fermer_retards_interne()` et retourne la liste des tickets fermés. Appelé par `noc_admin.html` toutes les 3 secondes via `setInterval`.
+
+**`POST /api/tickets/<id>/forcer-cloture`** — Endpoint backend existant, non câblé dans le frontend actuel.
+
+### Groupe 7 : Gantt et Performance
+
+**`GET /api/gantt?date=YYYY-MM-DD`** — Appelle `_fermer_retards_interne()` au départ. Utilise `NOW() AT TIME ZONE 'Africa/Casablanca'` côté PostgreSQL pour connaître la date courante. Pour **aujourd'hui** : prend les tickets avec `DATE(date_assignation) = aujourd'hui` ET statut actif ou déjà terminé ce jour. Pour un autre jour : tickets planifiés ce jour (J+1 non démarrés) ou terminés ce jour-là. Retourne une structure groupée par technicien avec leur liste de tickets.
+
+**`GET /api/carte`** — Endpoint unique qui retourne en **une seule requête** les 4 couches de la carte : secteurs, équipements, incidents (OUVERT/EN_COURS/INCOMPLET), techniciens (avec statut calculé via LATERAL). Appelle `_fermer_retards_interne()` au préalable.
+
+**`GET /api/performance`** et **`GET /api/performance/techniciens`** — Statistiques complètes par technicien : total tickets, complétés, incomplets, durée moyenne, taux de complétion, note moyenne.
+
+---
+
+## 8. LA LOGIQUE MÉTIER CLÉS — Ce qu'il faut savoir expliquer
+
+### La clôture automatique (`_fermer_retards_interne`)
+
+C'est la fonction la plus importante du backend. Elle est appelée :
+- En tête de `/api/kpi`, `/api/carte`, `/api/gantt`, `/api/techniciens`
+- Via l'endpoint `POST /api/tickets/fermer-retards` appelé toutes les 3s par le front
+
+Son fonctionnement exact :
+1. Récupère tous les tickets actifs non EN_PAUSE avec une `date_assignation` et une `duree_estimee_min`
+2. Pour chaque ticket : calcule `fin_theorique = date_assignation + duree_estimee_min`
+3. Si `pg_now() > fin_theorique` : ferme le ticket en INCOMPLET avec cause "Durée estimée dépassée — clôture automatique NOC"
+4. La `date_fin_intervention` est mise à `fin_theorique` (pas à l'heure actuelle) — logique importante car le ticket peut être ouvert longtemps après la fin théorique si personne n'a utilisé l'app entre-temps
+5. Libère le technicien (statut DISPONIBLE, ticket_actif_id NULL)
+6. Insère dans `ticket_historique` avec `updated_by = 'SYSTEME'`
+
+### La disponibilité dynamique des techniciens
+
+`dim_technicien.statut` n'est **pas** la source de vérité. La vraie disponibilité est calculée dynamiquement via jointure LATERAL dans fact_tickets : un technicien est réellement occupé si et seulement si il existe un ticket avec `technicien_id = t.id AND statut_terrain NOT IN ('COMPLETE','INCOMPLET') AND date_assignation <= NOW()`. C'est pour éviter les désynchronisations (bug réseau, crash, etc.).
+
+### La formule de distance
+
+```python
+distance_km = 111.0 × √((lat_tech − lat_inc)² + (lng_tech − lng_inc)²)
+```
+
+111 km/degré est une **approximation** valable pour des petites distances (quelques dizaines de km). C'est suffisant pour une ville marocaine. Pour être précis il faudrait la formule de Haversine, mais ici l'approximation euclidienne est acceptable.
+
+### L'horloge PostgreSQL vs Python
+
+Le code utilise `pg_now()` (qui exécute `SELECT NOW() AT TIME ZONE 'Africa/Casablanca'`) et non `datetime.now()` Python pour les opérations critiques (dispatch, J+1, clôture auto). Pourquoi ? Parce que si Flask et PostgreSQL tournent sur des machines différentes, leurs horloges peuvent être légèrement décalées. En prenant l'heure directement depuis PostgreSQL, on garantit la cohérence avec tous les timestamps stockés en base.
+
+---
+
+## 9. LE CYCLE DE VIE COMPLET D'UN TICKET — Ce qui se passe en DB
+
+Quand l'admin dispatche :
+```sql
+INSERT INTO fact_tickets (code_ticket, incident_id, technicien_id, ..., statut='ASSIGNE', statut_terrain=NULL, date_assignation=now)
+UPDATE dim_technicien SET statut='EN_INTERVENTION', ticket_actif_id=<new_id>
+UPDATE fact_incidents SET statut='EN_COURS', ticket_id=<new_id>, technicien_assigne_nom='...'
+INSERT INTO ticket_historique (..., statut_avant=NULL, statut_apres='ASSIGNE')
+```
+
+Quand le technicien passe EN_ROUTE :
+```sql
+UPDATE fact_tickets SET statut_terrain='EN_ROUTE'
+INSERT INTO ticket_historique (..., statut_avant=NULL, statut_apres='EN_ROUTE')
+```
+
+Quand le technicien arrive SUR_SITE :
+```sql
+UPDATE fact_tickets SET statut_terrain='SUR_SITE', date_arrivee_site=now
+INSERT INTO ticket_historique (...)
+```
+
+Quand il passe EN_COURS :
+```sql
+UPDATE fact_tickets SET statut_terrain='EN_COURS', date_debut_intervention=now
+INSERT INTO ticket_historique (...)
+```
+
+Quand il prend une pause :
+```sql
+UPDATE fact_tickets SET statut_terrain='EN_PAUSE', pause_debut=now
+UPDATE dim_technicien SET statut='EN_PAUSE'
+INSERT INTO ticket_historique (...)
+```
+
+Quand il reprend (fin pause, par exemple 20 min) :
+```sql
+UPDATE fact_tickets SET statut_terrain='EN_COURS', duree_pause_min=0+20=20, duree_estimee_min=duree_estimee_min+20, pause_debut=NULL
+UPDATE dim_technicien SET statut='EN_INTERVENTION'
+INSERT INTO ticket_historique (..., 'Fin pause — 20 min ajoutées à la durée estimée')
+```
+
+Quand il clôture COMPLETE :
+```sql
+UPDATE fact_tickets SET statut_terrain='COMPLETE', date_fin_intervention=now, duree_intervention_min=(now-date_assignation)/60
+UPDATE dim_technicien SET statut='DISPONIBLE', ticket_actif_id=NULL
+UPDATE fact_incidents SET statut='RESOLU', date_resolution=now, duree_resolution_min=(now-date_assignation)/60
+INSERT INTO ticket_historique (...)
+```
+
+---
+
+## 10. LES INTERFACES — Ce qui s'affiche et pourquoi
+
+### `login.html`
+Simple choix de profil. Stocke `{role: 'ADMIN'}` ou `{role: 'TECHNICIEN'}` dans `sessionStorage` sous la clé `nv_user`. Les deux autres pages vérifient cette clé au chargement et redirigent vers `login.html` si absente.
+
+### `noc_admin.html` (5 pages)
+- **Dashboard** : 7 KPI + 7 graphiques Chart.js, `setInterval(refreshKPI, 3000)` et `setInterval(runFermerRetards, 3000)` tournent en parallèle
+- **Carte** : Leaflet.js sur fond CartoCDN sombre, 4 couches de marqueurs SVG animés (équipements, incidents par sévérité, techniciens). Clic sur un incident OUVERT → ouvre le panel de dispatch. Clic sur un incident INCOMPLET → propose le redispatch via `confirmerDeblocage()` → `POST /api/incidents/<id>/debloquer`
+- **Incidents** : liste filtrée, bouton "Carte" → bascule sur la carte et ouvre le panel dispatch sur cet incident
+- **Techniciens** : liste avec statut temps réel, détail avec stats
+- **Gantt** : frise horaire journalière par technicien, navigation jour par jour, badges clignotants si retard, bouton export CSV, clic sur une barre → timeline interactive du ticket
+
+### `tech.html`
+- Sélecteur de technicien groupé par secteur (via `<optgroup>`)
+- `setInterval(refreshTechnicien, 10000)` toutes les 10 secondes — appelle `/api/techniciens/<id>/ticket-actif`
+- Affiche le ticket actif avec 4 boutons séquentiels (EN_ROUTE → SUR_SITE → EN_COURS → COMPLETE/INCOMPLET)
+- Bouton PAUSE visible uniquement en statut EN_COURS
+- Clôture COMPLETE → formulaire de note (optionnel, 1-5 étoiles)
+- Clôture INCOMPLET → sélecteur de cause parmi 10 causes prédéfinies (obligatoire)
+- Toast notification à chaque nouveau ticket assigné
+
+---
+statut — vision côté NOC/incident
+
+Valeurs : ASSIGNE, RESOLU, INCOMPLET, FERME
+Représente l'état du ticket du point de vue de la gestion administrative
+Mis à jour par le backend lors du dispatch (ASSIGNE) et à la clôture (RESOLU ou INCOMPLET)
+C'est ce champ que le NOC Admin utilise pour savoir si un incident est pris en charge
+
+
+statut_terrain — vision côté technicien
+
+Valeurs : NULL → EN_ROUTE → SUR_SITE → EN_COURS → EN_PAUSE → COMPLETE ou INCOMPLET
+Représente la progression réelle de l'intervention sur le terrain
+Mis à jour uniquement par le technicien via PATCH /api/tickets/<id>/statut
+C'est ce champ que le Gantt, le donut et l'interface technicien utilisent
+
+
+En pratique dans votre DB :
+Un ticket peut avoir statut = ASSIGNE et statut_terrain = EN_COURS en même temps — le NOC sait qu'il est assigné, le technicien est en train d'intervenir. À la clôture COMPLETE, les deux sont mis à jour : statut → RESOLU et statut_terrain → COMPLETE.
+Pourquoi pas un seul champ ? Parce que les deux acteurs ont des cycles différents — le NOC a besoin de savoir si l'incident est couvert (ASSIGNE) indépendamment de l'étape exacte du technicien.s
+
+Por incidents incomplets :
+
+En pratique, le superviseur sait que la cause est résolue par communication hors-système : le technicien l'appelle, envoie un message, ou la pièce commandée est arrivée. La plateforme gère la traçabilité et la validation humaine, pas la détection automatique de résolution de cause — ce qui est cohérent avec la réalité opérationnelle d'un NOC.
+
+
+## 11. QUESTIONS FRÉQUENTES EN SOUTENANCE
+
+**"Pourquoi l'authentification n'est pas implémentée ?"**
+C'était une décision de périmètre validée avec l'encadrant. Un vrai système d'auth (JWT, hash bcrypt) aurait mobilisé plusieurs semaines supplémentaires sur un PFE de 4 mois. La plateforme utilise `sessionStorage` comme garde-fou minimal. La table `dim_users` et une authentification complète sont prévues en phase 2.
+
+**"Comment le dispatch choisit le technicien ?"**
+Il ne choisit pas — il **assiste**. Il propose une liste triée : techniciens du même secteur d'abord, puis les autres, et dans chaque groupe, trié par distance croissante. Le superviseur choisit librement dans cette liste. Le premier de la liste reçoit le badge "✦ Recommandé".
+
+**"Que se passe-t-il si deux admins dispatche le même incident en même temps ?"**
+L'endpoint `assigner` vérifie `WHERE statut = 'OUVERT'` avant d'insérer. Le deuxième admin recevrait l'erreur "Incident déjà pris en charge". Il n'y a pas de verrou transactionnel SELECT FOR UPDATE, c'est une limite identifiée.
+
+**"Comment la clôture automatique fonctionne-t-elle si personne n'utilise l'app ?"**
+`_fermer_retards_interne()` est appelée en tête de `/api/kpi`, `/api/carte`, `/api/gantt` et `/api/techniciens`. Au premier accès de l'app, toutes les clôtures en retard sont rattrapées d'un coup, même si elles datent de plusieurs heures. C'est le mécanisme de rattrapage — le setInterval toutes les 3s n'est qu'un déclencheur supplémentaire.
+
+**"Pourquoi la durée d'intervention inclut le temps de trajet ?"**
+C'est un choix métier délibéré : du point de vue du NOC, ce qui compte c'est le temps total d'indisponibilité depuis le moment où une ressource a été mobilisée. La durée est calculée depuis `date_assignation` (pas depuis `date_debut_intervention`). C'est plus représentatif du coût réel d'une intervention.
+
+**"Qu'est-ce que le schéma en étoile apporte concrètement ?"**
+Les jointures analytiques sont directes (faits → dimensions) sans chaîne. Une requête comme "incidents critiques par secteur cette semaine avec MTTR" se fait en une jointure simple `fact_incidents JOIN dim_secteur`. En 3NF classique, il faudrait passer par plusieurs tables intermédiaires.
+
+**"Pourquoi les données sont simulées et pas réelles ?"**
+Les données réseau de Huawei Maroc sont confidentielles et non accessibles dans le cadre d'un PFE. Les données simulées reproduisent la structure exacte et les dynamiques réelles : distribution temporelle des incidents avec pics aux heures de forte activité, durées estimées cohérentes par type de panne, répartition géographique sur des coordonnées GPS réelles du Maroc.
