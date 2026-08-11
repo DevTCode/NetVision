@@ -180,13 +180,16 @@ def kpi():
         # fact_tickets peut être vide au début — pas d'erreur
         tk = query_one("""
             SELECT
-                COUNT(*)                                                         AS total_tickets,
-                COUNT(*) FILTER (WHERE statut_terrain = 'COMPLETE')              AS tickets_complets,
-                COUNT(*) FILTER (WHERE statut_terrain = 'INCOMPLET')             AS tickets_incomplets,
-                COUNT(*) FILTER (WHERE statut_terrain IN ('EN_ROUTE','SUR_SITE','EN_COURS')) AS tickets_actifs,
-                ROUND(AVG(note_intervention), 1)                                 AS note_intervention_moy,
-                ROUND(AVG(distance_km), 1)                                       AS distance_moy_km
-            FROM fact_tickets
+                COUNT(*) FILTER (WHERE tk.statut_terrain = 'COMPLETE')           AS tickets_complets,
+                COUNT(*) FILTER (WHERE tk.statut_terrain = 'INCOMPLET'
+                                   AND fi.statut = 'INCOMPLET')                  AS tickets_incomplets,
+                COUNT(*) FILTER (WHERE tk.statut_terrain IN ('EN_ROUTE','SUR_SITE','EN_COURS')) AS tickets_actifs,
+                COUNT(*) FILTER (WHERE (tk.statut_terrain IS NULL OR tk.statut = 'ASSIGNE')
+                                   AND tk.date_assignation > (NOW() AT TIME ZONE 'Africa/Casablanca')) AS tickets_planifies,
+                ROUND(AVG(tk.note_intervention), 1)                              AS note_intervention_moy,
+                ROUND(AVG(tk.distance_km), 1)                                    AS distance_moy_km
+            FROM fact_tickets tk
+            LEFT JOIN fact_incidents fi ON tk.incident_id = fi.id
         """)
 
         techs = query_one("""
@@ -1119,6 +1122,15 @@ def _fermer_retards_interne():
             SET statut = 'DISPONIBLE', ticket_actif_id = NULL
             WHERE id = %s
         """, (tk["technicien_id"],))
+
+        execute("""
+            UPDATE fact_incidents
+            SET statut = 'OUVERT',
+                ticket_id = NULL,
+                technicien_assigne_id = NULL,
+                technicien_assigne_nom = NULL
+            WHERE id = %s
+        """, (tk["incident_id"],))
 
         execute("""
             INSERT INTO ticket_historique
