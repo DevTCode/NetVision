@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TélécomBI — NOC Admin</title>
+<title>NetVision : NOC Admin</title>
 
 <!-- Fonts Poppins + Roboto (main.css) -->
 <link href="https://fonts.googleapis.com" rel="preconnect">
@@ -564,7 +564,7 @@ canvas { max-height:190px; }
 
   <nav class="nav-pills">
     <button class="npill active" onclick="goPage('dashboard',this)">
-      <i class="bi bi-speedometer2"></i> Dashboard
+      <i class="bi bi-speedometer2"></i> Tableau de bord
     </button>
     <button class="npill" onclick="goPage('carte',this)">
       <i class="bi bi-map-fill"></i> Carte
@@ -707,7 +707,6 @@ canvas { max-height:190px; }
         <button class="fmap-btn" onclick="setMapFilter('critique',this)">🔴 Critiques</button>
         <button class="fmap-btn" onclick="setMapFilter('majeur',this)">🟠 Majeurs</button>
         <button class="fmap-btn" onclick="setMapFilter('mineur',this)">🟡 Mineurs</button>
-        <button class="fmap-btn" onclick="setMapFilter('equipements',this)">⚙ Équipements</button>
         <button class="fmap-btn" onclick="setMapFilter('techniciens',this)">👷 Techniciens</button>
         <button class="fmap-btn" onclick="setMapFilter('incomplet',this)">⚠ Bloqués</button>
       </div>
@@ -924,7 +923,7 @@ function startGanttAutoRefresh() {
         }, '#ff3c6e');
         refreshKPI();
       toast('⏱ Clôture automatique',
-          `${tk.code_ticket} — ${tk.technicien} n'a pas terminé dans le délai estimé`,
+          `${tk.code_ticket} : ${tk.technicien} n'a pas terminé dans le délai estimé`,
           'error');
       });
     }
@@ -1107,8 +1106,8 @@ async function buildCharts() {
     const complets   = kd.tickets_complets   || 0;
     const incomplets = kd.tickets_incomplets || 0;
     const actifs     = kd.tickets_actifs     || 0;
-    const total      = kd.total_tickets      || 0;
-    const planifies  = Math.max(0, total - complets - incomplets - actifs);
+    const planifies  = kd.tickets_planifies || 0;
+    const total      = complets + incomplets + actifs + planifies;
     const vals   = [complets, incomplets, actifs, planifies];
     const labels = ['Complétés','Incomplets','En cours','Planifiés'];
     const cols   = ['rgba(0,200,100,.85)','rgba(255,60,110,.85)','rgba(0,212,255,.85)','rgba(130,80,255,.85)'];
@@ -1180,7 +1179,7 @@ async function checkPauses() {
         const key = `pause_notif_${tk.ticket_id}`;
         if(!sessionStorage.getItem(key)) {
           sessionStorage.setItem(key, '1');
-          toast(`☕ ${t.prenom} ${t.nom} — En pause`,
+          toast(`☕ ${t.prenom} ${t.nom} : En pause`,
             `${tk.code_ticket} · La pause sera déduite de la durée estimée`, 'info');
         }
       } else {
@@ -1272,7 +1271,15 @@ function icoInc(sev, statut){
 }
 function icoTech(st){
   const c={DISPONIBLE:'#00c864',EN_INTERVENTION:'#ffa500',EN_PAUSE:'#ff9500',INDISPONIBLE:'#444'}[st]||'#888';
-  return L.divIcon({html:`<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="8" fill="#0d1b2e" stroke="${c}" stroke-width="2.5"/><text x="11" y="15" text-anchor="middle" font-size="8" fill="${c}" font-family="Arial" font-weight="bold">T</text></svg>`,iconSize:[22,22],iconAnchor:[11,11],className:''});
+  return L.divIcon({
+    html:`<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
+      <circle cx="11" cy="11" r="8" fill="#0d1b2e" stroke="${c}" stroke-width="2.5"/>
+      <text x="11" y="15" text-anchor="middle" font-size="8" fill="${c}" font-family="Arial" font-weight="bold">T</text>
+    </svg>`,
+    iconSize:[22,22],
+    iconAnchor:[11, 30],  // ← décalé vers le haut de 8px
+    className:''
+  });
 }
 function icoEq(st){
   const cfg={
@@ -1323,7 +1330,10 @@ async function buildMapLayers() {
   (carte.incidents||[]).forEach(inc=>{
     if(!inc.latitude && !inc.lat) return;
     const lat=inc.latitude||inc.lat, lng=inc.longitude||inc.lng;
-    const m=L.marker([lat,lng],{icon:icoInc(inc.severite,inc.statut)});
+    const m=L.marker([lat,lng],{
+      icon:icoInc(inc.severite,inc.statut),
+      zIndexOffset: inc.severite==='CRITIQUE' ? 400 : inc.severite==='MAJEUR' ? 300 : 200
+    });
     m.on('click',()=>showIncDP({...inc,lat,lng}));
     // Toujours dans le layer SEVERITE — peu importe le statut
     incG[inc.severite]?.addLayer(m);
@@ -1508,23 +1518,7 @@ async function showIncDP(inc, skipFlyTo=false) {
   document.getElementById('dp-body').innerHTML=h;
 }
 
-function showEqDP(eq) {
-  if(MAP) MAP.flyTo([eq.latitude||eq.lat, eq.longitude||eq.lng], 14, {duration:1});
-  document.getElementById('dp').classList.add('open');
-  document.getElementById('dp-title').textContent = 'Équipement';
-  const stColor = {ACTIF:'var(--green)', MAINTENANCE:'var(--amber)', HORS_SERVICE:'var(--red)'}[eq.statut]||'var(--text-dim)';
-  document.getElementById('dp-body').innerHTML = `
-    <div class="dp-field"><div class="dp-label">Code</div><div class="dp-val mono">${eq.code}</div></div>
-    <div class="dp-field"><div class="dp-label">Nom</div><div class="dp-val">${eq.nom||'—'}</div></div>
-    <div class="dp-field"><div class="dp-label">Type</div><div class="dp-val">${eq.type}</div></div>
-    <div class="dp-field"><div class="dp-label">Modèle</div><div class="dp-val">${eq.modele||'—'}</div></div>
-    <div class="dp-field"><div class="dp-label">Statut</div>
-      <div class="dp-val" style="color:${stColor};font-weight:600">● ${eq.statut}</div>
-    </div>
-    <div class="dp-field"><div class="dp-label">Coordonnées</div>
-      <div class="dp-val mono" style="font-size:10px">${(eq.latitude||eq.lat||0).toFixed(4)}°N · ${(eq.longitude||eq.lng||0).toFixed(4)}°E</div>
-    </div>`;
-}
+
 
 async function showTechDP(t) {
   if(MAP && t.lat) MAP.flyTo([t.lat,t.lng],13,{duration:1});
@@ -1548,7 +1542,6 @@ async function showTechDP(t) {
           style="font-size:11px">${tech.statut.replace('_',' ')}</span>
       </div>
     </div>
-    <div class="dp-field"><div class="dp-label">Secteur</div><div class="dp-val">${tech.secteur_nom||'—'}</div></div>
     <div class="dp-field"><div class="dp-label">Performance</div><div class="dp-val">⭐ ${tech.note_perf}/5 · ${tech.annees_exp} ans</div></div>
     <div class="dp-field"><div class="dp-label">Horaires</div><div class="dp-val" style="font-size:12px">${tech.heure_debut||'09:00'}–${tech.heure_fin||'18:00'}</div></div>
     <div class="dp-field"><div class="dp-label">Compétences</div><div class="dp-val" style="font-size:11px">${comp}</div></div>
@@ -1589,7 +1582,7 @@ async function showIncIncompletDP(inc, skipFlyTo=false) {
     <div style="background:rgba(255,149,0,0.08);border:1px solid rgba(255,149,0,0.3);
       border-radius:10px;padding:12px 14px;margin-bottom:14px">
       <div style="font-family:var(--font-heading);font-size:11px;font-weight:700;
-        color:#ff9500;margin-bottom:4px">⚠ Incident bloqué — intervention incomplète</div>
+        color:#ff9500;margin-bottom:4px">⚠ Incident bloqué : intervention incomplète</div>
     
     </div>
     <div class="dp-field"><div class="dp-label">Code</div><div class="dp-val mono">${code}</div></div>
@@ -1597,7 +1590,7 @@ async function showIncIncompletDP(inc, skipFlyTo=false) {
     <div class="dp-field"><div class="dp-label">Sévérité</div>
       <div class="dp-val"><span class="badge ${inc.severite}">${inc.severite}</span></div>
     </div>
-    <div class="dp-field"><div class="dp-label">Secteur</div><div class="dp-val">${sect}</div></div>
+    
     <hr class="dp-sep">
     <button onclick="showDebloquerPopup(${inc.id},'${code}','${cause.replace(/'/g,"\'").slice(0,80)}')"
       style="width:100%;padding:11px;border-radius:9px;
@@ -1607,7 +1600,7 @@ async function showIncIncompletDP(inc, skipFlyTo=false) {
       justify-content:center;gap:7px;margin-bottom:8px"
       onmouseover="this.style.background='rgba(0,200,100,0.18)'"
       onmouseout="this.style.background='rgba(0,200,100,0.08)'">
-      <i class="bi bi-unlock-fill"></i> Cause résolue — Redispatcher
+      <i class="bi bi-unlock-fill"></i> Cause résolue : Réaffecter
     </button>
     <button onclick="closeDP()"
       style="width:100%;padding:9px;border-radius:9px;
@@ -1661,7 +1654,7 @@ async function showDebloquerPopup(incId, code, cause) {
           font-family:var(--font-heading);font-size:12px;font-weight:600;cursor:pointer"
           onmouseover="this.style.background='rgba(255,60,110,0.12)'"
           onmouseout="this.style.background='rgba(255,60,110,0.06)'">
-          <i class="bi bi-x-circle"></i> Non — Reste bloqué
+          <i class="bi bi-x-circle"></i> Non : Rester bloqué
         </button>
         <button onclick="confirmerDeblocage(${incId}); this.closest('[style*=fixed]').remove();"
           style="padding:12px;border-radius:9px;border:1px solid rgba(0,200,100,0.4);
@@ -1669,7 +1662,7 @@ async function showDebloquerPopup(incId, code, cause) {
           font-family:var(--font-heading);font-size:12px;font-weight:700;cursor:pointer"
           onmouseover="this.style.background='rgba(0,200,100,0.2)'"
           onmouseout="this.style.background='rgba(0,200,100,0.1)'">
-          <i class="bi bi-check-circle-fill"></i> Oui — Redispatcher
+          <i class="bi bi-check-circle-fill"></i> Oui : Réaffecter
         </button>
       </div>
     </div>`;
@@ -1681,7 +1674,7 @@ async function confirmerDeblocage(incId) {
   const res = await api(`/api/incidents/${incId}/debloquer`, {method:'POST'});
   if(res && res.success) {
     toast('✅ Incident débloqué',
-      `${res.code_incident} remis OUVERT — sélectionner un technicien`,
+      `${res.code_incident} remis OUVERT : sélectionner un technicien`,
       'success');
     closeDP();
     // Rafraîchir immédiatement le tableau des incidents (retire le ticket débloqué de la liste INCOMPLET)
@@ -1735,7 +1728,7 @@ async function doAssign() {
         `${res.code_ticket} → ${res.technicien}\n` +
         `📍 ${res.distance_km||'?'} km · 🔧 Fin estimée : ${res.fin_estimee_heure||'—'}`,
         'success');
-      setTimeout(()=>toast('📡 Notification',`${selTech.prenom} ${selTech.nom} — en route`,'info'),1400);
+      setTimeout(()=>toast('📡 Notification',`${selTech.prenom} ${selTech.nom} : en route`,'info'),1400);
     }
     // Rafraîchir Gantt immédiatement après dispatch
     setTimeout(async () => {
@@ -1762,13 +1755,13 @@ async function doAssign() {
   }
 }
 
-function redispatchTicket(incId) {
+function réaffectationTicket(incId) {
   if(!incId) { toast('Erreur','Incident non trouvé','error'); return; }
-  toast('🔄 Redispatch','Ouverture du panel de dispatch...','info');
-  dispatchInc(incId);
+  toast('🔄 Réaffectation',"Ouverture du panneau d'affectation...",'info');
+  affecterInc(incId);
 }
 
-function dispatchInc(id){
+function affecterInc(id){
   const carteBtn = document.querySelectorAll('.npill')[1];
   goPage('carte', carteBtn);
   setTimeout(async()=>{
@@ -2238,7 +2231,7 @@ function renderGanttRows(techRows, dateStr){
         const j1Label = depasseJournee && si===0 ? `<span style="font-size:8px;opacity:0.8;margin-left:4px;background:rgba(255,165,0,0.3);padding:1px 4px;border-radius:3px">→J+1</span>` : '';
         return `<div class="g-seg ${tk.statut_terrain}" ${id_attr}
           style="left:${left}%;width:${w}%;border-radius:${radius};${si>0?'border-left:1px dashed rgba(255,255,255,0.2);':''}${depasseJournee?'border-right:2px dashed rgba(255,165,0,0.8);':''}"
-          title="${tk.code_ticket}${depasseJournee?' — Reprise demain 8h':''}">
+          title="${tk.code_ticket}${depasseJournee?' : Reprise demain 09h00':''}">
           ${icon?`<span style="font-size:10px">${icon}</span>`:''}
           ${w>4?`<span style="overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0">${libelle}</span>`:''}
           ${w>14&&durStr?`<span style="opacity:0.8;font-size:8px;font-weight:400;white-space:nowrap;margin-left:3px">${durStr}</span>`:''}
@@ -2303,7 +2296,7 @@ function renderGanttRows(techRows, dateStr){
             style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;margin-top:3px;
             border-radius:4px;border:1px solid rgba(0,200,100,0.3);background:rgba(0,200,100,0.06);
             color:var(--green);font-family:var(--font-heading);font-size:8px;font-weight:600;
-            text-decoration:none" title="Appel via téléphone/Skype/Teams — ${t.telephone}">
+            text-decoration:none" title="Appel via téléphone/Skype/Teams : ${t.telephone}">
             <i class="bi bi-telephone-fill"></i> ${t.telephone}
           </a>` : '';
 
@@ -2415,7 +2408,7 @@ async function exportGanttExcel() {
   const a = document.createElement('a');
   a.href=url; a.download=`gantt_${dateStr}.csv`; a.click();
   URL.revokeObjectURL(url);
-  toast('✅ Export réussi', `${rows.length-1} tickets exportés — ${dateStr}`, 'success');
+  toast('✅ Export réussi', `${rows.length-1} tickets exportés : ${dateStr}`, 'success');
 }
 
 async function showTicketHistorique(tkId, code) {
@@ -2457,6 +2450,7 @@ async function showTicketHistorique(tkId, code) {
   }
 
   const stColor={EN_ROUTE:'#0066ff',SUR_SITE:'#ffa500',EN_COURS:'#00d4ff',COMPLETE:'#00c864',INCOMPLET:'#ff3c6e',EN_PAUSE:'#ff9500',ASSIGNE:'#8250ff'}
+  const stFR={'COMPLETE':'COMPLET','INCOMPLET':'INCOMPLET','EN_ROUTE':'EN ROUTE','SUR_SITE':'SUR SITE','EN_COURS':'EN COURS','EN_PAUSE':'EN PAUSE','ASSIGNE':'ASSIGNÉ','PLANIFIE':'PLANIFIÉ'};
 
   const modal = document.createElement('div');
   modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center';
@@ -2475,7 +2469,7 @@ async function showTicketHistorique(tkId, code) {
       <div style="background:var(--bg2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px">
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
           <span class="badge ${data.severite}">${data.severite}</span>
-          <span class="badge ${data.statut_terrain||data.statut}">${data.statut_terrain||data.statut}</span>
+          <span class="badge ${data.statut_terrain||data.statut}">${stFR[data.statut_terrain||data.statut]||data.statut_terrain||data.statut}</span>
         </div>
         <div style="color:var(--text);margin-top:6px">${data.libelle||data.incident_libelle||'—'}</div>
         <div style="color:var(--text-dim);margin-top:2px">${data.nom||''} ${data.prenom||''} · ${data.matricule||'—'}</div>
@@ -2484,7 +2478,7 @@ async function showTicketHistorique(tkId, code) {
       </div>
 
       <!-- Timeline historique -->
-      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:10px;font-family:var(--font-heading)">Timeline</div>
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:10px;font-family:var(--font-heading)">Chronologie</div>
       ${hist.length===0
         ?`<div style="color:var(--text-dim);font-size:12px;text-align:center;padding:14px">Aucun historique disponible</div>`
         :hist.map((h,i)=>{
@@ -2498,7 +2492,7 @@ async function showTicketHistorique(tkId, code) {
             </div>
             <div style="flex:1;min-width:0">
               <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px">
-                <span style="font-size:11px;font-weight:600;color:${c}">${h.statut_apres}</span>
+                <span style="font-size:11px;font-weight:600;color:${c}">${stFR[h.statut_apres]||h.statut_apres}</span>
                 <span style="font-size:9px;color:var(--text-dim);margin-left:auto">${dt}</span>
               </div>
               <div style="font-size:10px;color:var(--text-dim)">${h.updated_by||'—'}</div>
@@ -2618,7 +2612,7 @@ async function confirmJ1Assign(incId, techId) {
     const da=String(res.date_assignation||'');
     const mm=da.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
     const dateStr=mm?`${mm[3]}/${mm[2]} à ${mm[4]}:${mm[5]}`:'demain 09:00';
-    toast('📅 Ticket J+1 confirmé',`${res.code_ticket} → ${res.technicien}\nReprise : ${dateStr}`,'success');
+    toast('📅 Ticket planifié pour demain confirmé',`${res.code_ticket} → ${res.technicien}\nReprise : ${dateStr}`,'success');
     selTech=null; pendInc=null; closeDP();
     setTimeout(async()=>{await buildMapLayers();await refreshKPI();},800);
   } else {
@@ -2626,13 +2620,13 @@ async function confirmJ1Assign(incId, techId) {
   }
 }
 
-function redispatchTicket(incId) {
+function réaffectationTicket(incId) {
   if(!incId) { toast('Erreur','Incident non trouvé','error'); return; }
-  toast('🔄 Redispatch','Ouverture du panel de dispatch...','info');
-  dispatchInc(incId);
+  toast('🔄 Réaffectation',"Ouverture du panneau d'affectation...",'info');
+  affecterInc(incId);
 }
 
-async function dispatchInc(id){
+async function affecterInc(id){
   // Charger le détail complet de l'incident (lat/lng + sévérité)
   const inc = await api(`/api/incidents/${id}`);
   if(!inc){ toast('Erreur','Incident introuvable','error'); return; }
@@ -2659,7 +2653,7 @@ async function runFermerRetards() {
   const res=await api('/api/tickets/fermer-retards',{method:'POST'});
   if(!res||!res.count) return;
   res.fermes.forEach(tk=>{
-    toast('⏱ Clôture automatique',`${tk.code_ticket} — ${tk.technicien} — durée dépassée`,'error');
+    toast('⏱ Clôture automatique',`${tk.code_ticket} : ${tk.technicien} : durée dépassée`,'error');
   });
   await refreshKPI();
   await buildEscalade();
